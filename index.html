@@ -156,6 +156,31 @@
   .giveup:disabled { opacity: .4; cursor: default; text-decoration: none; }
   .giveup:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
+  /* ---------- the seal: flashes, marks, ledger ---------- */
+  @keyframes flashg { 0%, 100% { box-shadow: inset 0 0 0 99px rgba(46,125,79,0); } 18%, 52% { box-shadow: inset 0 0 0 99px rgba(46,125,79,.38); } 35%, 70% { box-shadow: inset 0 0 0 99px rgba(46,125,79,.08); } }
+  @keyframes flashr { 0%, 100% { box-shadow: inset 0 0 0 99px rgba(179,64,46,0); } 18%, 52% { box-shadow: inset 0 0 0 99px rgba(179,64,46,.42); } 35%, 70% { box-shadow: inset 0 0 0 99px rgba(179,64,46,.1); } }
+  .cell.flashG { animation: flashg 1.7s ease-out; }
+  .cell.flashR { animation: flashr 1.7s ease-out; }
+  .cell.markA { box-shadow: inset 0 -3px 0 -1px var(--miss); }
+  .cell.markD { box-shadow: inset -3px 0 0 -1px var(--miss); }
+  .cell.markA.markD { box-shadow: inset 0 -3px 0 -1px var(--miss), inset -3px 0 0 -1px var(--miss); }
+  .cell.markStale.markA { box-shadow: inset 0 -3px 0 -1px rgba(179,64,46,.28); }
+  .cell.markStale.markD { box-shadow: inset -3px 0 0 -1px rgba(179,64,46,.28); }
+  .cell.markStale.markA.markD { box-shadow: inset 0 -3px 0 -1px rgba(179,64,46,.28), inset -3px 0 0 -1px rgba(179,64,46,.28); }
+  .cell.sel.markA, .cell.sel.markD, .cell.sel.markA.markD { box-shadow: inset 0 0 0 3px var(--accent); } /* cursor outranks marks */
+  .sealbtn { border-color: var(--gold, #a8842c); }
+  .sealbtn.armed { background: var(--gold, #a8842c); border-color: var(--gold, #a8842c); }
+  .sealbtn.lastseal { background: var(--miss); border-color: var(--miss); }
+  .ledger {
+    margin: 8px 0 0; padding: 8px 12px; border-radius: 10px;
+    background: var(--paper-hi); border: 1.5px dashed var(--paper-dim);
+    font-family: var(--sans); font-size: 14px; color: var(--ink-soft);
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .ledger[hidden] { display: none; }
+  .ledger .ledline.now { color: var(--ink); font-weight: 600; }
+  .ledger .ledline.warn { color: var(--miss); font-weight: 600; }
+
   /* ---------- the win show: Folded & Sealed ---------- */
   .showstage { position: fixed; inset: 0; z-index: 60; touch-action: none; cursor: pointer; }
   .showbox { position: absolute; perspective: 1100px; perspective-origin: 50% 20%; }
@@ -359,10 +384,11 @@
           </div>
           <button class="cb-nav" id="cbnext" aria-label="Next clue pair">›</button>
         </div>
+        <div class="ledger" id="ledger" hidden aria-live="polite"></div>
         <div class="actionbar" id="actionbar">
           <div class="lockrow">
             <button class="btn swapb" id="swapbtn" title="Swap the two penciled words between their twin homes" aria-label="Swap words between twin slots">⇄</button>
-            <button class="btn primary" id="lockbtn"><span id="locklabel">Lock</span></button>
+            <button class="btn primary sealbtn" id="lockbtn" title="One press judges the whole grid"><span id="locklabel">Seal the grid</span></button>
           </div>
           <div class="toolrow">
             <button class="btn" id="chiselbtn" title="Reveal the selected square's letter — costs one strike">💡 Chisel a letter <small>(1 strike)</small></button>
@@ -393,15 +419,27 @@
     </div></div>
     <div class="howstep"><div class="hownum">2</div><div>
       <b>Pencil freely. The grid is your witness.</b>
-      <p>Type letters anywhere — pencil marks are free and private. Placement is proved by the crossings: if a crossing pair writes a <b>U</b> into a square either way round, whatever crosses it must agree.</p>
+      <p>Type letters anywhere — pencil is never judged. Placement is proved by the crossings: if a crossing pair writes a <b>U</b> into a square either way round, whatever crosses it must agree. The <b>⇄</b> button flips a pair between its two homes without retyping.</p>
       <div class="minidemo">Both homes of 2-Down put a <b>U</b> in that square → 1-Across must be P<b>U</b>MA, not LION.</div>
     </div></div>
     <div class="howstep"><div class="hownum">3</div><div>
-      <b>Lock a pair when you’re sure. Four lamps.</b>
-      <p>Locking is the only test. Right words in the right homes lock green forever. Right words, wrong homes — that’s a strike, and the fix is free knowledge. Anything else is a strike too, with a hint about which words belong. The fourth lamp ends the day.</p>
-      <p>Stuck? The <b>💡 chisel</b> buys one letter for a strike. The <b>📖 almanac</b> settles a pair for free — but the day is marked <i>assisted</i>.</p>
+      <b>Fill the whole grid, then SEAL it. Once.</b>
+      <p>The seal judges everything at the end. Right everywhere — the day is yours. Wrong — a lamp lights, true entries flash <b class="t1">green</b>, wrong ones flash <b style="color:var(--miss)">red</b> and stay softly underlined until you rework them. The fourth lamp ends the day.</p>
+      <p>Stuck? The <b>💡 chisel</b> buys one true letter for a lamp. The <b>📖 almanac</b> settles a pair of your choosing free — one page a day, another when a seal breaks — but the day is marked <i>assisted</i>.</p>
     </div></div>
-    <p class="lead" style="margin-bottom:0">The clue tells you the two words.<br>The grid tells you their homes.</p>
+    <p class="lead" style="margin-bottom:0">Seal true on your very first press, unaided: <b>✦ Flawless</b>.</p>
+  </div>
+</div>
+
+<div class="scrim" id="rulescrim" role="dialog" aria-modal="true" aria-label="The rules have deepened">
+  <div class="modal">
+    <button class="mclose" data-close="rulescrim" aria-label="Close">×</button>
+    <h2>The rules have deepened</h2>
+    <p class="lead">The locks are gone. Now you pencil the <i>whole</i> grid, then press <b>SEAL</b> — once, at the end.</p>
+    <div class="howstep"><div class="hownum">⤫</div><div>
+      <p>A wrong seal lights a lamp: true entries flash <b class="t1">green</b>, wrong ones flash <b style="color:var(--miss)">red</b> and stay underlined until you rework them. Four lamps still end the day. The 💡 chisel and 📖 almanac are still here when you need them.</p>
+      <p><b>Your streak and every stat carry on exactly as they are</b> — and your first stumble under the new rules is on the house.</p>
+    </div></div>
   </div>
 </div>
 
@@ -498,7 +536,8 @@
   /* ================= persistence ================= */
   function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function load(k, dflt) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : dflt; } catch (e) { return dflt; } }
-  function defaultStats() { return { sv: 1, played: 0, wins: 0, streak: 0, maxStreak: 0, flawless: 0, cold: 0, assisted: 0, histo: { 0: 0, 1: 0, 2: 0, 3: 0, L: 0 }, lastIdx: -9, graceWeek: '' }; }
+  var CUTOVER_IDX = 4; // day the seal rules shipped; first loss within a week of it is amnestied
+  function defaultStats() { return { sv: 2, played: 0, wins: 0, streak: 0, maxStreak: 0, flawless: 0, firstPress: 0, cold: 0, assisted: 0, rulesAmnesty: 0, histo: { 0: 0, 1: 0, 2: 0, 3: 0, L: 0 }, lastIdx: -9, graceWeek: '' }; }
   var stats = (function () {
     var d = defaultStats(), s = load('dxc.stats', null);
     if (!s || typeof s !== 'object') return d;
@@ -510,21 +549,32 @@
 
   function freshDay() {
     var d = {
-      v: 1, idx: dayIdx,
+      v: 2, idx: dayIdx,
       pencil: new Array(N * N).fill(''),
-      locked: new Array(N * N).fill(''),
-      revealed: new Array(N * N).fill(''),
-      lockedPairs: PAIRS.map(function () { return false; }),
-      swapKnown: PAIRS.map(function () { return false; }),
-      badges: {}, coach: [],
+      locked: new Array(N * N).fill(''),         // trusted ink (almanac-settled / v1 migration)
+      revealed: new Array(N * N).fill(''),       // chisel / starter truth
+      lockedPairs: PAIRS.map(function () { return false; }), // v2 meaning: settled pairs
+      coach: [],
+      seals: [], marks: [], almanacs: 0,
       strikes: 0, actions: [], done: 0, win: 0, assisted: 0, gaveup: 0, counted: 0
     };
     if (STARTER) d.revealed[STARTER.cell] = STARTER.ch;
     return d;
   }
+  function migrateV1(d) {
+    // v1 locks were verified truth — carry them as settled ink; never wipe her grid
+    d.v = 2;
+    d.seals = []; d.marks = []; d.almanacs = 0;
+    delete d.swapKnown; delete d.badges;
+    if (!d.coach) d.coach = [];
+    return d;
+  }
   var day = load('dxc.day', null);
-  if (!day || day.idx !== dayIdx || day.v !== 1) day = freshDay();
+  var migrated = false;
+  if (day && day.idx === dayIdx && day.v === 1) { day = migrateV1(day); migrated = true; }
+  if (!day || day.idx !== dayIdx || day.v !== 2) day = freshDay();
   function saveDay() { store('dxc.day', day); }
+  if (migrated) saveDay(); // persist the migration immediately, not on the next keystroke
 
   /* ================= selection ================= */
   var sel = { cell: -1, dir: 'A' };
@@ -546,6 +596,7 @@
     sel.cell = cell;
     almanacPending = -1;  // any reselection cancels a pending almanac confirmation
     giveupArmed = false;
+    disarmSeal();
     render();
   }
   function selectPair(pi, preferEmpty) {
@@ -555,11 +606,13 @@
     sel.cell = preferEmpty ? firstEditableCell(p.s1) : s.cells[0];
     if (pi !== almanacPending) almanacPending = -1;
     giveupArmed = false;
+    disarmSeal();
     render();
   }
 
   /* ================= letters on the board ================= */
   function letterAt(cell) { return day.locked[cell] || day.revealed[cell] || day.pencil[cell] || ''; }
+  var CTR_ROW = 3, CTR_COL = 3; // 7x7 board centre — origin of the seal ripple
   function slotWord(sid) {
     var s = G.slots[sid], w = '';
     for (var k = 0; k < s.cells.length; k++) { var ch = letterAt(s.cells[k]); if (!ch) return null; w += ch; }
@@ -614,42 +667,23 @@
     }
   }
 
-  function pairReady(p) {
-    return !day.lockedPairs[p.i] && slotWord(p.s1) !== null && slotWord(p.s2) !== null;
-  }
-
   function swapWords() {
     var p = selPair();
     if (!p || day.done || day.lockedPairs[p.i]) return;
     var A = G.slots[p.s1].cells, B = G.slots[p.s2].cells;
     for (var k = 0; k < A.length; k++) {
       var ca = A[k], cb = B[k];
-      var pa = day.pencil[ca], pb = day.pencil[cb];
-      if (!day.locked[ca] && !day.revealed[ca]) day.pencil[ca] = pb || '';
-      if (!day.locked[cb] && !day.revealed[cb]) day.pencil[cb] = pa || '';
+      // read the EFFECTIVE letter each side shows, write only where editable —
+      // swapping across settled/chiseled squares must never eat a letter
+      var la = letterAt(ca), lb = letterAt(cb);
+      if (!day.locked[ca] && !day.revealed[ca]) day.pencil[ca] = lb || '';
+      if (!day.locked[cb] && !day.revealed[cb]) day.pencil[cb] = la || '';
     }
     saveDay(); render();
   }
 
-  // could the swapped orientation be ruled out by TRUE letters currently visible?
-  function forcedNow(p) {
-    var A = G.slots[p.s1].cells, B = G.slots[p.s2].cells;
-    for (var k = 0; k < A.length; k++) {
-      var t1 = day.locked[A[k]] || day.revealed[A[k]];
-      if (t1 && p.w2[k] !== t1) return true;   // w2 can't live in slot1
-      var t2 = day.locked[B[k]] || day.revealed[B[k]];
-      if (t2 && p.w1[k] !== t2) return true;   // w1 can't live in slot2
-    }
-    return false;
-  }
-  function pairCellsBare(p) {
-    var A = G.slots[p.s1].cells, B = G.slots[p.s2].cells;
-    for (var k = 0; k < A.length; k++) if (day.locked[A[k]] || day.revealed[A[k]] || day.locked[B[k]] || day.revealed[B[k]]) return false;
-    return true;
-  }
-
   var lastLockedCells = [];
-  function commitLock(p, how) {
+  function settlePair(p) { // write both true words as trusted ink (almanac / v1 migration)
     var A = G.slots[p.s1].cells, B = G.slots[p.s2].cells;
     lastLockedCells = [];
     for (var k = 0; k < A.length; k++) {
@@ -657,46 +691,83 @@
       day.locked[B[k]] = p.w2[k]; day.pencil[B[k]] = '';
       lastLockedCells.push(A[k], B[k]);
     }
-    day.lockedPairs[p.i] = true;
-    delete day.badges[p.i]; // paid-for hints served their purpose; don't haunt the solved card
-    day.coach.push({ p: p.i, how: how });
-    // sight-read count is derived from day.coach at endDay (survives mid-game reloads)
+    day.lockedPairs[p.i] = true; // v2 meaning: settled
   }
   function popLocked() { lastLockedCells.forEach(function (c, j) { setTimeout(function () { popCell(c); }, j * 26); }); }
 
-  function attemptLock() {
-    var p = selPair();
-    if (!p || day.done || day.lockedPairs[p.i] || !pairReady(p)) return;
-    var w1 = slotWord(p.s1), w2 = slotWord(p.s2);
-    // a completed lock always resolves — right words in wrong homes, or simply wrong, cost a strike
-    // (no free pass for non-words: guessing gibberish is still a guess)
-    if (w1 === p.w1 && w2 === p.w2) {
-      var how = day.swapKnown[p.i] ? 'swpf' : (forcedNow(p) ? 'anch' : (pairCellsBare(p) ? 'cold' : 'sight'));
+  /* ================= THE SEAL — one whole-grid commitment =================
+     Invariant (proven per-day by pipeline/verify_bank.js, countConsistent===1):
+     any FULL grid that is not the solution has >=1 slot spelling neither of its
+     own pair's answers — a failed seal always has something honest to mark. */
+  function gridFull() {
+    for (var i = 0; i < N * N; i++) { if (!G.bl[i] && !letterAt(i)) return false; }
+    return true;
+  }
+  function snapshot() {
+    var s = '';
+    for (var i = 0; i < N * N; i++) s += G.bl[i] ? '.' : (letterAt(i) || '?');
+    return s;
+  }
+  function slotTruth(sid) { // does this slot spell ITS OWN answer, in place?
+    var p = PAIRS[pairOfSlot[sid]];
+    return slotWord(sid) === (sid === p.s1 ? p.w1 : p.w2);
+  }
+  function pairHome(p) { return slotTruth(p.s1) && slotTruth(p.s2); }
+
+  var sealArmed = false, sealArmTimer = 0;
+  function disarmSeal() { sealArmed = false; clearTimeout(sealArmTimer); }
+  function seal() {
+    if (day.done) return;
+    if (!gridFull()) { toast('Fill every square to seal.'); return; }
+    var snap = snapshot();
+    if (day.seals.some(function (s) { return s.snap === snap; })) {
+      toast('You’ve sealed this exact arrangement before.');
+      return;
+    }
+    if (!sealArmed) {
+      sealArmed = true;
+      render();
+      clearTimeout(sealArmTimer);
+      sealArmTimer = setTimeout(function () { sealArmed = false; render(); }, 5000);
+      return;
+    }
+    disarmSeal();
+    var home = PAIRS.filter(pairHome).length;
+    if (home === PAIRS.length) {
       day.actions.push('L');
-      commitLock(p, how);
-      saveDay(); render();
-      popLocked();
-      checkWin();
+      endDay(true);
       return;
     }
-    if (w1 === p.w2 && w2 === p.w1) {
-      day.strikes++; day.swapKnown[p.i] = true;
-      day.actions.push('S');
-      flashCard(p.i, 'amber');
-      toast('Right words, wrong homes.');
-      afterStrike();
-      return;
-    }
+    // failed seal: one strike, flash the truth, keep honest persistent marks
     day.strikes++;
     day.actions.push('M');
-    var bag = day.badges[p.i] || (day.badges[p.i] = []);
-    [w1, w2].forEach(function (w) {
-      var ok = (w === p.w1 || w === p.w2);
-      if (!bag.some(function (b) { return b[0] === w; })) bag.push([w, ok]);
-    });
-    flashCard(p.i, 'red');
-    toast('Not quite — badges on the clue card.');
-    afterStrike();
+    var okSlots = [], badSlots = [];
+    G.slots.forEach(function (s) { (slotTruth(s.id) ? okSlots : badSlots).push(s.id); });
+    if (home < PAIRS.length && badSlots.length === 0) console.error('DXC invariant violated: uniqueness proof broken');
+    day.marks = badSlots.map(function (sid) { return { sid: sid, w: slotWord(sid) }; });
+    day.seals.push({ home: home, bad: badSlots.length, snap: snap });
+    saveDay(); render();
+    flashSlots(okSlots, badSlots);
+    var n = day.seals.length;
+    toast('Seal ' + n + ' — ' + home + ' of ' + PAIRS.length + ' pairs are home.');
+    if (day.strikes >= 4) endDay(false);
+  }
+
+  /* the flash: green pulse on true entries, red on the rest — then the marks persist */
+  function flashSlots(okSlots, badSlots) {
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return; // marks alone carry it
+    function pulse(sids, cls) {
+      sids.forEach(function (sid) {
+        G.slots[sid].cells.forEach(function (c) {
+          var el = cellEls[c];
+          el.classList.remove('flashG', 'flashR'); void el.offsetWidth;
+          el.classList.add(cls);
+          setTimeout(function () { el.classList.remove(cls); }, 1750);
+        });
+      });
+    }
+    pulse(okSlots, 'flashG');
+    pulse(badSlots, 'flashR');
   }
 
   function chisel() {
@@ -713,10 +784,12 @@
     if (day.strikes >= 4) endDay(false); // unreachable by guard, kept as belt-and-braces
   }
 
+  function almanacPagesLeft() { return 1 + day.seals.length - day.almanacs; } // a page a day; a broken seal opens another
   var almanacPending = -1;  // pair id awaiting a confirming second tap (scoped per pair)
   function almanac() {
     var p = selPair();
     if (!p || day.done || day.lockedPairs[p.i]) return;
+    if (almanacPagesLeft() <= 0) { toast('The almanac is closed for today.'); return; }
     if (almanacPending !== p.i) {
       almanacPending = p.i;
       toast('The almanac settles this pair for free, but marks today assisted. Tap Almanac again to confirm.');
@@ -724,11 +797,11 @@
     }
     almanacPending = -1;
     day.assisted = 1;
+    day.almanacs++;
     day.actions.push('A');
-    commitLock(p, 'alma');
+    settlePair(p);
     saveDay(); render();
     popLocked();
-    checkWin();
   }
 
   var giveupArmed = false;
@@ -745,14 +818,6 @@
     endDay(false);
   }
 
-  function afterStrike() {
-    saveDay(); render();
-    if (day.strikes >= 4) endDay(false);
-  }
-  function checkWin() {
-    if (day.lockedPairs.every(function (x) { return x; })) endDay(true);
-  }
-
   /* ================= streak & end ================= */
   function weekKey(d) {
     var t = new Date(d); t.setHours(0, 0, 0, 0);
@@ -765,11 +830,11 @@
     if (!day.counted) {
       day.counted = 1;
       stats.played++;
-      stats.cold += day.coach.filter(function (e) { return e.how === 'cold'; }).length;
       if (win) {
         stats.wins++;
         var flawless = day.strikes === 0 && !day.assisted && day.actions.indexOf('C') < 0;
         if (flawless) stats.flawless++;
+        if (day.seals.length === 0) stats.firstPress++; // won on the very first press (tools allowed)
         if (day.assisted) stats.assisted++;
         stats.histo[Math.min(day.strikes, 3)]++;
         if (stats.lastIdx === day.idx - 1) stats.streak++;
@@ -778,7 +843,12 @@
         if (stats.streak > stats.maxStreak) stats.maxStreak = stats.streak;
       } else {
         stats.histo.L++;
-        stats.streak = 0;
+        if (!stats.rulesAmnesty && day.idx < CUTOVER_IDX + 7) {
+          stats.rulesAmnesty = 1; // the new rules owe you one — streak stands
+          setTimeout(function () { toast('The new rules owe you one — your streak stands.'); }, 900);
+        } else {
+          stats.streak = 0;
+        }
         day.actions.push('X');
       }
       stats.lastIdx = day.idx;
@@ -800,7 +870,9 @@
   var EMOJI = { L: '🟩', S: '🟨', M: '🟥', C: '💡', A: '📖', X: '⬛' };
   function shareText() {
     var n = (dayIdx % bank.length) + 1;
-    var head = 'Double Cross No. ' + n + ' · ' + (day.win ? day.strikes + (day.strikes === 1 ? ' strike' : ' strikes') : (day.gaveup ? '🏳 set down' : 'cracked'));
+    var head = 'Double Cross No. ' + n + ' · ' + (day.win
+      ? (day.seals.length === 0 ? 'sealed first press' : 'sealed in ' + (day.seals.length + 1))
+      : (day.gaveup ? '🏳 set down' : 'cracked'));
     var line = day.actions.map(function (a) { return EMOJI[a] || ''; }).join('');
     var extras = [];
     if (stats.streak >= 2) extras.push('🔥 ' + stats.streak);
@@ -852,14 +924,26 @@
     }
     return null;
   }
-  var COACHNAMES = { anch: ['Anchored', 'anch', 'proved by letters already on the board'], sight: ['Read the crossings', 'anch', 'no board letters yet touched this pair — solved through neighbours'], cold: ['Sight-read ✦', 'cold', 'locked before a single letter of it was on the board'], swpf: ['Swap-fixed', 'swpf', 'a strike bought the certainty'], alma: ['Almanac', 'alma', 'the book settled it'] };
   function coachHtml() {
-    var h = '<ol class="coachlist">';
-    day.coach.forEach(function (e) {
-      var p = PAIRS[e.p], nm = COACHNAMES[e.how] || COACHNAMES.anch;
-      h += '<li><span class="cbadge ' + nm[1] + '">' + nm[0] + '</span><span><b>' + pairLabel(p) + '</b> — ' + p.w1.toUpperCase() + ' / ' + p.w2.toUpperCase() + '</span></li>';
-    });
-    h += '</ol>';
+    var h = '';
+    if (day.seals.length) {
+      h += '<ol class="coachlist">';
+      day.seals.forEach(function (s, i) {
+        // name one honest stray from that attempt's snapshot, so a hard day ends in understanding
+        var stray = '';
+        for (var sid = 0; sid < G.slots.length && !stray; sid++) {
+          var sl = G.slots[sid], word = '';
+          for (var k = 0; k < sl.cells.length; k++) { var ch = s.snap[sl.cells[k]]; word += (ch === '?' ? '' : ch); }
+          if (word.length !== sl.len) continue;
+          var pp = PAIRS[pairOfSlot[sid]];
+          if (word !== pp.w1 && word !== pp.w2) stray = word.toUpperCase() + ' at ' + slotLabel(sid) + ' wasn’t one of its clue’s answers';
+        }
+        h += '<li><span class="cbadge swpf">Seal ' + (i + 1) + '</span><span>' + s.home + ' of ' + PAIRS.length + ' pairs home' + (stray ? ' — ' + stray : '') + '</span></li>';
+      });
+      h += '</ol>';
+    } else if (day.win) {
+      h += '<div class="toehold">✦ Sealed on the very first press — the grid never had a chance.</div>';
+    }
     var th = toeholdPair();
     if (th) h += '<div class="toehold">🧭 <b>Today’s toehold:</b> ' + pairLabel(th.p) + ' — its wrong arrangement clashes with ' + th.via + ' no matter which way round that goes.</div>';
     return h;
@@ -931,6 +1015,7 @@
       }
       if (i === sel.cell && !day.done) cls += ' sel';
       cellEls[i].className = cls;
+      cellEls[i].classList.remove('markA', 'markD', 'markStale');
       // accessible label: number, letter, and state for screen-reader users
       var numLabel = d.querySelector('.num') ? d.querySelector('.num').textContent + ', ' : '';
       var state = day.locked[i] ? 'locked' : day.revealed[i] ? 'revealed' : (overlayGhost && overlayGhost[i]) ? 'answer' : day.pencil[i] ? 'pencil' : 'empty';
@@ -939,24 +1024,38 @@
     }
     // lamps
     for (var k = 0; k < 4; k++) document.getElementById('lamp' + k).className = 'lamp' + (day.strikes > k ? ' lit' : '');
+    // seal marks: red dashed underline on entries the last seal judged wrong; stale once edited
+    var markedPairs = {};
+    if (!day.done) day.marks.forEach(function (m) {
+      var stale = slotWord(m.sid) !== m.w;
+      var s = G.slots[m.sid];
+      s.cells.forEach(function (c) {
+        cellEls[c].classList.add(s.dir === 'A' ? 'markA' : 'markD');
+        if (stale) cellEls[c].classList.add('markStale');
+      });
+      if (!stale) markedPairs[pairOfSlot[m.sid]] = true;
+    });
     // cards
     PAIRS.forEach(function (q) {
       var c = cardEls[q.i], st = c.querySelector('.state');
       c.classList.toggle('sel', !!p && p.i === q.i && !day.done);
       c.classList.toggle('done', !!day.lockedPairs[q.i]);
       var bits = '';
-      if (day.lockedPairs[q.i]) {
-        bits += '<span class="tagchip good">✓ locked</span>'; // solved: old miss badges are noise now
-      } else {
-        if (day.swapKnown[q.i]) bits += '<span class="tagchip swap">⇄ right words — swap their homes</span>';
-        var cw1 = slotWord(q.s1), cw2 = slotWord(q.s2);
-        (day.badges[q.i] || []).forEach(function (b) {
-          var current = (b[0] === cw1 || b[0] === cw2); // badge word still penciled somewhere in the pair?
-          bits += '<span class="tagchip badge-' + (b[1] ? 'y' : 'n') + (current ? '' : ' stale') + '">' + b[0].toUpperCase() + ' ' + (b[1] ? '✓ belongs' : '✗ not here') + '</span>';
-        });
-      }
+      if (day.lockedPairs[q.i]) bits += '<span class="tagchip good">📖 settled</span>';
+      else if (markedPairs[q.i]) bits += '<span class="tagchip badge-n">✒ rethink this one</span>';
       st.innerHTML = bits;
     });
+    // seal ledger — every attempt's honest tally, reviewable all day
+    var ledger = document.getElementById('ledger');
+    if (day.seals.length && !day.done) {
+      ledger.hidden = false;
+      ledger.innerHTML = day.seals.map(function (s, i) {
+        var line = 'Seal ' + (i + 1) + ' · ' + s.home + ' of ' + PAIRS.length + ' pairs home · ' + s.bad + (s.bad === 1 ? ' entry' : ' entries') + ' off';
+        return '<div class="ledline' + (i === day.seals.length - 1 ? ' now' : '') + '">' + line + '</div>';
+      }).join('') + (day.strikes === 3 ? '<div class="ledline warn">One more broken seal sets the day down.</div>' : '');
+    } else {
+      ledger.hidden = true;
+    }
     // active clue bar — the selected pair's clue stays in sight while typing in the grid
     var cbar = document.getElementById('cluebar');
     if (p && !day.done) {
@@ -964,7 +1063,7 @@
       document.getElementById('cbheads').innerHTML =
         '<span class="h1">' + slotLabel(p.s1) + '</span> <span class="sep">↔</span> <span class="h2">' + slotLabel(p.s2) + '</span>'
         + ' <span class="len">· ' + G.slots[p.s1].len + ' letters</span>'
-        + (day.lockedPairs[p.i] ? ' <span class="len">· ✓ locked</span>' : '');
+        + (day.lockedPairs[p.i] ? ' <span class="len">· 📖 settled</span>' : '');
       document.getElementById('cbclue').innerHTML = p.ct === 's' ? esc(p.clue) : esc(p.ca) + ' <span class="parts">/</span> ' + esc(p.cb);
     } else {
       cbar.hidden = true;
@@ -973,27 +1072,21 @@
     var lockbtn = document.getElementById('lockbtn'), locklabel = document.getElementById('locklabel');
     var swapbtn = document.getElementById('swapbtn');
     var chiselbtn = document.getElementById('chiselbtn'), almanacbtn = document.getElementById('almanacbtn');
+    lockbtn.classList.remove('armed', 'lastseal');
     if (day.done) {
       lockbtn.disabled = swapbtn.disabled = chiselbtn.disabled = almanacbtn.disabled = true;
-      locklabel.textContent = day.win ? 'Solved' : 'Cracked';
-    } else if (!p) {
-      lockbtn.disabled = swapbtn.disabled = almanacbtn.disabled = true;
-      chiselbtn.disabled = sel.cell < 0 || day.strikes > 2;
-      locklabel.textContent = 'Lock';
-    } else if (day.lockedPairs[p.i]) {
-      lockbtn.disabled = swapbtn.disabled = almanacbtn.disabled = true;
-      chiselbtn.disabled = sel.cell < 0 || day.strikes > 2 || !!day.locked[sel.cell] || !!day.revealed[sel.cell];
-      locklabel.textContent = pairLabel(p) + ' ✓';
+      locklabel.textContent = day.win ? 'Sealed' : 'Cracked';
     } else {
-      var w1 = slotWord(p.s1), w2 = slotWord(p.s2);
-      var ready = w1 !== null && w2 !== null;
-      lockbtn.disabled = !ready;
-      swapbtn.disabled = false;
-      almanacbtn.disabled = false;
+      var empty = 0;
+      for (var ci = 0; ci < N * N; ci++) if (!G.bl[ci] && !letterAt(ci)) empty++;
+      lockbtn.disabled = empty > 0;
+      if (empty > 0) locklabel.textContent = 'Seal the grid — ' + empty + (empty === 1 ? ' square' : ' squares') + ' to go';
+      else if (sealArmed) { locklabel.textContent = 'Press again to seal'; lockbtn.classList.add('armed'); }
+      else if (day.strikes === 3) { locklabel.textContent = 'LAST SEAL'; lockbtn.classList.add('lastseal'); }
+      else locklabel.textContent = 'Seal the grid';
+      swapbtn.disabled = !p || !!day.lockedPairs[p.i];
+      almanacbtn.disabled = !p || !!day.lockedPairs[p.i] || almanacPagesLeft() <= 0;
       chiselbtn.disabled = sel.cell < 0 || day.strikes > 2 || !!day.locked[sel.cell] || !!day.revealed[sel.cell];
-      locklabel.innerHTML = ready
-        ? 'Lock <span class="lockwords">' + slotLabel(p.s1) + '=<span class="w1">' + w1.toUpperCase() + '</span> · ' + slotLabel(p.s2) + '=<span class="w1">' + w2.toUpperCase() + '</span></span>'
-        : 'Lock ' + pairLabel(p) + ' — fill both homes first';
     }
     // give-up button
     var giveupbtn = document.getElementById('giveupbtn');
@@ -1015,9 +1108,13 @@
     var flawless = day.win && day.strikes === 0 && !day.assisted && day.actions.indexOf('C') < 0;
     var h = '';
     if (day.win) {
-      h += '<h3>' + (flawless ? '✦ Flawless.' : day.assisted ? 'Solved, with the almanac’s help.' : 'Solved.') + '</h3>';
-      var msgs = { 0: 'Not one lamp lit. Beautifully read.', 1: 'One lamp — a well-priced gamble.', 2: 'Two lamps, but the grid yielded.', 3: 'By the skin of your teeth.' };
-      h += '<div class="verdict">' + (flawless ? 'Not one lamp lit. Beautifully read.' : (day.assisted ? 'The almanac keeps its secrets between you two.' : msgs[Math.min(day.strikes, 3)])) + '</div>';
+      var firstPress = day.seals.length === 0;
+      h += '<h3>' + (flawless ? '✦ Flawless.' : day.assisted ? 'Sealed, with the almanac’s help.' : firstPress ? 'Sealed, first press.' : 'Sealed.') + '</h3>';
+      var msgs = { 1: 'One broken seal along the way — a fair price.', 2: 'Two lamps lit, but the grid yielded.', 3: 'By the skin of your teeth.' };
+      h += '<div class="verdict">' + (flawless ? 'One press, no lamps, no help. Beautifully read.'
+        : day.assisted ? 'The almanac keeps its secrets between you two.'
+        : firstPress ? 'The very first press held. Not one wasted lamp on seals.'
+        : msgs[Math.min(day.strikes, 3)]) + '</div>';
     } else if (day.gaveup) {
       h += '<h3>Set down for today.</h3><div class="verdict">You waved the flag — the full solution is inked in above. Fresh grid tomorrow.</div>';
     } else {
@@ -1074,7 +1171,7 @@
       + '</div>';
     h += '<div class="statgrid">'
       + '<div><div class="sv">' + stats.flawless + '</div><div class="sl">✦ FLAWLESS</div></div>'
-      + '<div><div class="sv">' + stats.cold + '</div><div class="sl">SIGHT-READS</div></div>'
+      + '<div><div class="sv">' + stats.firstPress + '</div><div class="sl">FIRST PRESS</div></div>'
       + '<div><div class="sv">' + stats.assisted + '</div><div class="sl">ASSISTED</div></div>'
       + '<div><div class="sv">' + stats.histo.L + '</div><div class="sl">CRACKED</div></div>'
       + '</div>';
@@ -1090,7 +1187,7 @@
 
   /* ================= modals ================= */
   function openScrim(id) { document.getElementById(id).classList.add('open'); }
-  function closeScrims() { ['helpscrim', 'statsscrim', 'coachscrim'].forEach(function (id) { document.getElementById(id).classList.remove('open'); }); }
+  function closeScrims() { ['helpscrim', 'rulescrim', 'statsscrim', 'coachscrim'].forEach(function (id) { document.getElementById(id).classList.remove('open'); }); }
   document.querySelectorAll('.mclose').forEach(function (b) { b.addEventListener('click', closeScrims); });
   document.querySelectorAll('.scrim').forEach(function (s) { s.addEventListener('pointerdown', function (ev) { if (ev.target === s) closeScrims(); }); });
   document.getElementById('helpbtn').addEventListener('click', function () { openScrim('helpscrim'); });
@@ -1098,7 +1195,7 @@
   document.getElementById('streakchip').addEventListener('click', showStats);
 
   /* ================= keyboard ================= */
-  document.getElementById('lockbtn').addEventListener('click', attemptLock);
+  document.getElementById('lockbtn').addEventListener('click', seal);
   document.getElementById('swapbtn').addEventListener('click', swapWords);
   document.getElementById('chiselbtn').addEventListener('click', chisel);
   document.getElementById('almanacbtn').addEventListener('click', almanac);
@@ -1261,10 +1358,9 @@
     return raceRaf().then(raceRaf);
   }
 
-  /* P0 — last-lock ripple + gold wink on the blocks */
+  /* P0 — the seal ripple, spreading from the heart of the grid */
   function ripple() {
-    var lastPair = day.coach.length ? PAIRS[day.coach[day.coach.length - 1].p] : PAIRS[0];
-    var oc = G.slots[lastPair.s1].cells[0], orow = (oc / N) | 0, ocol = oc % N;
+    var orow = CTR_ROW, ocol = CTR_COL;
     var ps = [];
     for (var i = 0; i < N * N; i++) {
       var d = Math.max(Math.abs(((i / N) | 0) - orow), Math.abs((i % N) - ocol)) * 28;
@@ -1696,7 +1792,7 @@
     else if (ev.key === 'ArrowLeft') { moveSel(0, -1); ev.preventDefault(); }
     else if (ev.key === 'ArrowRight') { moveSel(0, 1); ev.preventDefault(); }
     else if (ev.key === ' ') { sel.dir = sel.dir === 'A' ? 'D' : 'A'; if (selSlotId() === null) sel.dir = sel.dir === 'A' ? 'D' : 'A'; render(); ev.preventDefault(); }
-    else if (ev.key === 'Enter') { attemptLock(); ev.preventDefault(); }
+    else if (ev.key === 'Enter') { seal(); ev.preventDefault(); }
   });
 
   /* ================= header/date ================= */
@@ -1769,7 +1865,8 @@
     });
   }
   selectPair(0, true);
-  if (!load('dxc.helped', 0)) { openScrim('helpscrim'); store('dxc.helped', 1); }
+  if (!load('dxc.helped', 0)) { openScrim('helpscrim'); store('dxc.helped', 1); store('dxc.helped2', 1); }
+  else if (!load('dxc.helped2', 0)) { openScrim('rulescrim'); store('dxc.helped2', 1); }
 
   // quiet sanity check: derived slots must fit the pair words
   PAIRS.forEach(function (p) {
