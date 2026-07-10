@@ -1250,8 +1250,7 @@
         .then(function () { if (!SHOW.running) return; return foldsSeq(S); })
         .then(function () { if (!SHOW.running) return; return peek(S); })
         .then(function () { if (!SHOW.running) return; return stampFlip(S); })
-        .then(function () { if (!SHOW.running) return; return coda(S); })
-        .then(function () { if (!SHOW.running) return; return curtain(S); })
+        .then(function () { if (!SHOW.running) return; return burst(S); })
         .then(finishShow, finishShow);
     });
   }
@@ -1298,7 +1297,7 @@
     SHOW.box = box;
     box.style.left = br.left + 'px'; box.style.top = br.top + 'px';
     box.style.width = br.width + 'px'; box.style.height = br.height + 'px';
-    var S = { br: br, flaw: flaw, tiles: [], stackH: {}, creases: [] };
+    var S = { br: br, flaw: flaw, tiles: [], stackH: {} };
     S.shadow = sEl('packetshadow', box);
     var rects = [];
     for (var i = 0; i < N * N; i++) rects.push(cellEls[i].getBoundingClientRect());
@@ -1478,13 +1477,20 @@
   }
 
   function addCrease(S, f, hingePx) {
+    // a brief flash along the fresh fold, clamped INSIDE the packet edge — never a line on the desk
     var bb = packetBBox(S);
     var cr = sEl('crease', SHOW.box);
-    if (f.ax === 'x') { cr.style.left = (hingePx - .5) + 'px'; cr.style.top = bb.y + 'px'; cr.style.width = '1px'; cr.style.height = bb.h + 'px'; }
-    else { cr.style.left = bb.x + 'px'; cr.style.top = (hingePx - .5) + 'px'; cr.style.width = bb.w + 'px'; cr.style.height = '1px'; }
-    cr.style.zIndex = 950;
-    S.creases.push(cr);
-    regA(cr, [{ opacity: 0 }, { opacity: .12 }], { duration: 120, fill: 'forwards' });
+    if (f.ax === 'x') {
+      var cx = Math.max(bb.x + 1, Math.min(hingePx, bb.x + bb.w - 2));
+      cr.style.left = cx + 'px'; cr.style.top = bb.y + 'px'; cr.style.width = '1px'; cr.style.height = bb.h + 'px';
+    } else {
+      var cy = Math.max(bb.y + 1, Math.min(hingePx, bb.y + bb.h - 2));
+      cr.style.left = bb.x + 'px'; cr.style.top = cy + 'px'; cr.style.width = bb.w + 'px'; cr.style.height = '1px';
+    }
+    cr.style.zIndex = 200; // above baked tiles, below the next active fold
+    regA(cr, [
+      { opacity: 0 }, { opacity: .14, offset: .25 }, { opacity: .14, offset: .55 }, { opacity: 0 }
+    ], { duration: 480 }).then(function () { cr.remove(); });
   }
 
   function dressPacket(S, fi) {
@@ -1496,11 +1502,6 @@
     S.edge.style.left = bb.x + 'px'; S.edge.style.top = (bb.y + bb.h) + 'px';
     S.edge.style.width = bb.w + 'px'; S.edge.style.height = Math.min(2 * (fi + 1), 12) + 'px';
     if (S.flaw) S.edge.style.background = 'repeating-linear-gradient(to bottom, #e6e1d2 0 1px, #a8842c 1px 2px)';
-    // creases outside the shrinking packet vanish with it
-    S.creases.forEach(function (cr) {
-      var cx = parseFloat(cr.style.left), cy = parseFloat(cr.style.top);
-      if (cx < bb.x - 1 || cx > bb.x + bb.w + 1 || cy < bb.y - 1 || cy > bb.y + bb.h + 1) cr.style.opacity = '0';
-    });
   }
 
   /* P2.5 — the peek */
@@ -1537,7 +1538,6 @@
         if (!SHOW.running) return;
         S.pg.style.display = 'none';
         S.shadow.style.opacity = '0'; if (S.edge) S.edge.style.opacity = '0';
-        S.creases.forEach(function (cr) { cr.style.opacity = '0'; });
         S.card.style.visibility = '';
         return regA(S.card, [
           { transform: 'rotateY(-90deg) scale(' + s0 + ')' },
@@ -1553,106 +1553,109 @@
       .then(function () { return sWait(300); });
   }
 
-  /* P4 — solitaire coda: bounce + smear (flawless: three trails, one spinning gold) */
-  function coda(S) {
+  /* P4 — the burst: the sealed packet explodes into paper confetti;
+     the solved board re-emerges beneath the falling pieces */
+  function burst(S) {
     var rect = S.card.getBoundingClientRect();
-    // un-mirror trick: rotateY(-180)+scaleX(-1) === identity, so swap to plain rendering for the flight
-    S.card.querySelector('.sealface').classList.add('plain');
-    // reparent the card to the stage at fixed coords; hide everything else
-    S.card.style.left = rect.left + 'px'; S.card.style.top = rect.top + 'px';
-    S.card.style.width = rect.width + 'px'; S.card.style.height = rect.height + 'px';
-    S.card.style.transform = '';
-    SHOW.stage.appendChild(S.card);
-    SHOW.box.style.display = 'none';
-    boardEl.style.visibility = ''; boardEl.style.opacity = '0'; // curtain target, faded in during trails
-    var cw = rect.width, chh = rect.height;
+    var cx0 = rect.left + rect.width / 2, cy0 = rect.top + rect.height / 2;
+    // anticipation squash, then pop
+    return regA(S.card, [
+      { transform: 'rotateY(-180deg) scale(.97)' },
+      { transform: 'rotateY(-180deg) scale(.88)' }], { duration: 150, easing: 'ease-in', fill: 'forwards' })
+      .then(function () {
+        if (!SHOW.running) return;
+        var pop = regA(S.card, [
+          { transform: 'rotateY(-180deg) scale(.88)', opacity: 1 },
+          { transform: 'rotateY(-180deg) scale(1.3)', opacity: 0 }], { duration: 140, easing: 'ease-out', fill: 'forwards' });
+        // board re-emerges under the confetti rain
+        SHOW.box.style.pointerEvents = 'none';
+        boardEl.style.visibility = ''; boardEl.style.opacity = '0';
+        sTmr(function () {
+          if (!SHOW.running) return;
+          SHOW.box.style.display = 'none';
+          regA(boardEl, [{ opacity: 0 }, { opacity: 1 }], { duration: 650, easing: 'ease-out', fill: 'forwards' });
+        }, 240);
+        return pop;
+      })
+      .then(function () {
+        if (!SHOW.running) return;
+        return confetti(S, cx0, cy0);
+      });
+  }
+
+  function confetti(S, cx0, cy0) {
     var cv = document.createElement('canvas'); cv.className = 'trailcv';
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var vw = window.innerWidth, vh = (window.visualViewport ? visualViewport.height : window.innerHeight);
-    cv.width = Math.round(vw * dpr); cv.height = Math.round(window.innerHeight * dpr);
+    var vw = window.innerWidth, vh = window.innerHeight;
+    cv.width = Math.round(vw * dpr); cv.height = Math.round(vh * dpr);
     document.body.insertBefore(cv, SHOW.stage);
     SHOW.trail = cv;
     var ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
-    return makeSprite(S, cw, chh, dpr).then(function (sprites) {
-      if (!SHOW.running) return;
-      return new Promise(function (res) {
-        var floor = vh - chh;
-        var bodies = [{ x: rect.left, y: rect.top, vx: 420, vy: -350, e: .62, bounces: 0, sprite: sprites.main, live: true, dom: true, spin: 0, a: 0 }];
-        var shed = !S.flaw; // non-flawless: never shed
-        var last = 0, ticked = 0, g = 2400;
-        var wd = sTmr(function () { if (!ticked) { S.card.style.visibility = 'hidden'; res(); } }, 450); // rAF throttled? skip the coda
-        function frame(now) {
-          if (!SHOW.running) { res(); return; }
-          ticked = 1;
-          if (!last) last = now;
-          var dt = Math.min((now - last) / 1000, .032); last = now;
-          var alive = 0;
-          bodies.forEach(function (b) {
-            if (!b.live) return;
-            // stamp BEFORE moving — the smear
-            if (b.spin) { ctx.save(); ctx.translate(b.x + cw / 2, b.y + chh / 2); ctx.rotate(b.a); ctx.drawImage(b.sprite, -cw / 2, -chh / 2, cw, chh); ctx.restore(); }
-            else ctx.drawImage(b.sprite, b.x, b.y, cw, chh);
-            var steps = Math.max(1, Math.ceil(dt / .016));
-            var sdt = dt / steps;
-            for (var s = 0; s < steps; s++) {
-              b.vy += g * sdt; b.x += b.vx * sdt; b.y += b.vy * sdt; b.a += b.spin * sdt;
-              if (b.y > floor) {
-                b.y = floor; b.vy = -Math.abs(b.vy) * b.e; b.bounces++;
-                if (Math.abs(b.vy) < 120) b.vy = -(120 + Math.random() * 80);
-                b.spin *= .85;
-                if (b.dom && S.flaw && !shed) {
-                  shed = true; // flawless: the deal — two echoes, one spinning gold
-                  bodies.push({ x: b.x, y: b.y, vx: 300, vy: -430, e: .62, bounces: 0, sprite: sprites.echo, live: true, spin: 0, a: 0 });
-                  bodies.push({ x: b.x, y: b.y, vx: 540, vy: -270, e: .82, bounces: 0, sprite: sprites.gold, live: true, spin: 2.4, a: 0 });
-                }
-              }
-            }
-            if (b.x > vw + cw || b.bounces >= 5) { b.live = false; if (b.dom) S.card.style.visibility = 'hidden'; }
-            else alive++;
-            if (b.dom) S.card.style.transform = 'translate(' + (b.x - rect.left) + 'px,' + (b.y - rect.top) + 'px) scale(.97)';
-          });
-          if (!alive) { clearTimeout(wd); res(); return; }
-          SHOW.raf = requestAnimationFrame(frame);
-        }
-        SHOW.raf = requestAnimationFrame(frame);
-      });
-    });
-  }
-
-  /* the pre-rendered card sprite(s) for canvas stamping */
-  function makeSprite(S, cw, chh, dpr) {
-    var fload = (document.fonts && document.fonts.load) ? document.fonts.load('600 32px "Fraunces Masthead"').catch(function () {}) : Promise.resolve();
-    return Promise.resolve(fload).then(function () {
-      function draw(goldTint) {
-        var c = document.createElement('canvas');
-        c.width = Math.round(cw * dpr); c.height = Math.round(chh * dpr);
-        var x = c.getContext('2d'); x.scale(dpr, dpr);
-        var r = Math.min(12, cw * .09);
-        x.beginPath();
-        x.moveTo(r, 0); x.arcTo(cw, 0, cw, chh, r); x.arcTo(cw, chh, 0, chh, r); x.arcTo(0, chh, 0, 0, r); x.arcTo(0, 0, cw, 0, r); x.closePath();
-        x.fillStyle = goldTint ? '#f3ead2' : '#f6f2e7'; x.fill();
-        x.lineWidth = 2; x.strokeStyle = (S.flaw || goldTint) ? '#a8842c' : 'rgba(35,32,40,.55)'; x.stroke();
-        var crest = document.querySelector('.crest');
-        var cwid = cw * .38;
-        if (crest && crest.complete) { try { x.drawImage(crest, (cw - cwid) / 2, chh * .12, cwid, cwid); } catch (e) {} }
-        x.textAlign = 'center'; x.fillStyle = '#232028';
-        x.font = '600 ' + Math.round(cw * .085) + 'px "Fraunces Masthead", Georgia, serif';
-        x.fillText('DOUBLE CROSS', cw / 2, chh * .68);
-        x.fillStyle = '#1d5a56';
-        x.font = '600 ' + Math.round(cw * .062) + 'px "Fraunces Masthead", Georgia, serif';
-        x.fillText('No. ' + ((dayIdx % bank.length) + 1) + ' — SOLVED', cw / 2, chh * .78);
-        if (S.flaw) { x.fillStyle = '#a8842c'; x.font = '600 ' + Math.round(cw * .055) + 'px "Fraunces Masthead", Georgia, serif'; x.fillText('FLAWLESS ✦', cw / 2, chh * .87); }
-        return c;
+    var INK = ['#1d5a56', '#8a5a24', '#a8842c', '#f6f2e7', '#2e7d4f', '#232028'];
+    var GOLDINK = ['#a8842c', '#c9a545', '#f3ead2', '#1d5a56', '#f6f2e7'];
+    var pal = S.flaw ? GOLDINK : INK;
+    var parts = [];
+    function volley(n, x, y, oomph) {
+      for (var i = 0; i < n; i++) {
+        var ang = Math.random() * Math.PI * 2;
+        var sp = (250 + Math.random() * 650) * oomph;
+        var glyph = Math.random() < (S.flaw ? .1 : .06);
+        parts.push({
+          x: x, y: y,
+          vx: Math.cos(ang) * sp,
+          vy: Math.sin(ang) * sp - 280 * oomph, // bias skyward
+          rot: Math.random() * Math.PI, vr: (Math.random() - .5) * 14,
+          w: glyph ? 0 : 5 + Math.random() * 9, h: glyph ? 0 : 7 + Math.random() * 8,
+          glyph: glyph,
+          color: pal[(Math.random() * pal.length) | 0],
+          life: 1.15 + Math.random() * .75, t: 0,
+          freq: 4 + Math.random() * 7, phase: Math.random() * Math.PI * 2,
+        });
       }
-      return { main: draw(false), echo: draw(false), gold: draw(true) };
+    }
+    volley(S.flaw ? 200 : 130, cx0, cy0, 1);
+    if (S.flaw) sTmr(function () { if (SHOW.running) volley(90, cx0, cy0 - 60, .8); }, 320);
+    return new Promise(function (res) {
+      var last = 0, ticked = 0, g = 1500, cap = 0;
+      var wd = sTmr(function () { if (!ticked) res(); }, 450); // rAF throttled? skip straight on
+      function frame(now) {
+        if (!SHOW.running) { res(); return; }
+        ticked = 1;
+        if (!last) last = now;
+        var dt = Math.min((now - last) / 1000, .032); last = now;
+        cap += dt;
+        ctx.clearRect(0, 0, vw, vh);
+        var alive = 0;
+        for (var i = 0; i < parts.length; i++) {
+          var p = parts[i];
+          p.t += dt;
+          if (p.t >= p.life) continue;
+          alive++;
+          var drag = Math.exp(-1.8 * dt);
+          p.vx *= drag; p.vy = p.vy * drag + g * dt;
+          p.x += p.vx * dt + Math.sin(p.t * p.freq + p.phase) * 26 * dt;
+          p.y += p.vy * dt;
+          p.rot += p.vr * dt;
+          var a = p.t > p.life * .65 ? 1 - (p.t - p.life * .65) / (p.life * .35) : 1;
+          ctx.save();
+          ctx.globalAlpha = a;
+          ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+          if (p.glyph) {
+            ctx.fillStyle = p.color; ctx.font = '600 16px Georgia, serif';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('⤫', 0, 0);
+          } else {
+            ctx.fillStyle = p.color;
+            // fold shimmer: the piece narrows as it tumbles, like paper catching the light
+            ctx.fillRect(-p.w / 2, -p.h / 2 * Math.abs(Math.cos(p.rot * 1.7)), p.w, p.h * Math.abs(Math.cos(p.rot * 1.7)) || .5);
+          }
+          ctx.restore();
+        }
+        if (!alive || cap > 2.4) { clearTimeout(wd); ctx.clearRect(0, 0, vw, vh); res(); return; }
+        SHOW.raf = requestAnimationFrame(frame);
+      }
+      SHOW.raf = requestAnimationFrame(frame);
     });
-  }
-
-  /* P5 — curtain: the solved board re-emerges through the dissolving trails */
-  function curtain(S) {
-    var ps = [regA(boardEl, [{ opacity: 0 }, { opacity: 1 }], { duration: 700, easing: 'ease-out', fill: 'forwards' })];
-    if (SHOW.trail) ps.push(regA(SHOW.trail, [{ opacity: 1 }, { opacity: 0 }], { duration: 600, easing: 'ease-in', fill: 'forwards' }));
-    return Promise.all(ps);
   }
 
   window.__dxc = { winShow: winShow, finishShow: finishShow, SHOW: SHOW };
