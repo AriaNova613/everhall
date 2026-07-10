@@ -165,7 +165,7 @@
   }
   .showtile .tl { font-family: var(--sans); font-weight: 700; }
   .showtile.back { background: #efe9da !important; }
-  .showtile.back .tl { opacity: .12; }
+  .showtile.back .tl { display: none; } /* clean paper backs — no ghost letters */
   .showtile.tblock.back { background: #55504a !important; }
   .foldgroup { position: absolute; }
   .foldshade { position: absolute; inset: 0; background: #232028; opacity: 0; pointer-events: none; z-index: 960; }
@@ -1564,10 +1564,10 @@
       { transform: 'rotateY(-180deg) scale(.88)' }], { duration: 150, easing: 'ease-in', fill: 'forwards' })
       .then(function () {
         if (!SHOW.running) return;
+        // pop and confetti share the same beat — the packet IS the firework
         var pop = regA(S.card, [
           { transform: 'rotateY(-180deg) scale(.88)', opacity: 1 },
-          { transform: 'rotateY(-180deg) scale(1.3)', opacity: 0 }], { duration: 140, easing: 'ease-out', fill: 'forwards' });
-        // board re-emerges under the confetti rain
+          { transform: 'rotateY(-180deg) scale(1.35)', opacity: 0 }], { duration: 130, easing: 'ease-out', fill: 'forwards' });
         SHOW.box.style.pointerEvents = 'none';
         boardEl.style.visibility = ''; boardEl.style.opacity = '0';
         sTmr(function () {
@@ -1575,11 +1575,7 @@
           SHOW.box.style.display = 'none';
           regA(boardEl, [{ opacity: 0 }, { opacity: 1 }], { duration: 650, easing: 'ease-out', fill: 'forwards' });
         }, 240);
-        return pop;
-      })
-      .then(function () {
-        if (!SHOW.running) return;
-        return confetti(S, cx0, cy0);
+        return Promise.all([pop, confetti(S, cx0, cy0)]);
       });
   }
 
@@ -1595,26 +1591,36 @@
     var GOLDINK = ['#a8842c', '#c9a545', '#f3ead2', '#1d5a56', '#f6f2e7'];
     var pal = S.flaw ? GOLDINK : INK;
     var parts = [];
-    function volley(n, x, y, oomph) {
+    var boom = Math.max(1, Math.hypot(vw, vh) / 1100); // scale the blast to the screen
+    function spawn(x, y, ang, sp, glyphP) {
+      var glyph = Math.random() < glyphP;
+      parts.push({
+        x: x, y: y,
+        vx: Math.cos(ang) * sp,
+        vy: Math.sin(ang) * sp - 160,
+        rot: Math.random() * Math.PI, vr: (Math.random() - .5) * 16,
+        w: glyph ? 0 : 5 + Math.random() * 10, h: glyph ? 0 : 7 + Math.random() * 9,
+        glyph: glyph,
+        color: pal[(Math.random() * pal.length) | 0],
+        life: 1.25 + Math.random() * .95, t: 0,
+        freq: 4 + Math.random() * 7, phase: Math.random() * Math.PI * 2,
+      });
+    }
+    function ringVolley(n, x, y, sMin, sMax) { // the radial shell — uniform angles, screen-filling
       for (var i = 0; i < n; i++) {
-        var ang = Math.random() * Math.PI * 2;
-        var sp = (250 + Math.random() * 650) * oomph;
-        var glyph = Math.random() < (S.flaw ? .1 : .06);
-        parts.push({
-          x: x, y: y,
-          vx: Math.cos(ang) * sp,
-          vy: Math.sin(ang) * sp - 280 * oomph, // bias skyward
-          rot: Math.random() * Math.PI, vr: (Math.random() - .5) * 14,
-          w: glyph ? 0 : 5 + Math.random() * 9, h: glyph ? 0 : 7 + Math.random() * 8,
-          glyph: glyph,
-          color: pal[(Math.random() * pal.length) | 0],
-          life: 1.15 + Math.random() * .75, t: 0,
-          freq: 4 + Math.random() * 7, phase: Math.random() * Math.PI * 2,
-        });
+        var ang = (i / n) * Math.PI * 2 + (Math.random() - .5) * .22;
+        spawn(x, y, ang, (sMin + Math.random() * (sMax - sMin)) * boom, 0);
       }
     }
-    volley(S.flaw ? 200 : 130, cx0, cy0, 1);
-    if (S.flaw) sTmr(function () { if (SHOW.running) volley(90, cx0, cy0 - 60, .8); }, 320);
+    function fillVolley(n, x, y, oomph) { // the tumbling body of the burst
+      for (var i = 0; i < n; i++) spawn(x, y, Math.random() * Math.PI * 2, (260 + Math.random() * 680) * oomph * boom, S.flaw ? .1 : .06);
+    }
+    ringVolley(S.flaw ? 130 : 90, cx0, cy0, 780, 1150);
+    fillVolley(S.flaw ? 220 : 160, cx0, cy0, 1);
+    sTmr(function () { if (SHOW.running) fillVolley(S.flaw ? 110 : 70, cx0, cy0 - 40 * boom, .75); }, 280); // encore
+    // shockwave rings, viridian then gold
+    var shocks = [{ t: 0, c: '29,90,86' }, { t: -.07, c: '168,132,44' }];
+    var maxR = Math.hypot(vw, vh) * .55;
     return new Promise(function (res) {
       var last = 0, ticked = 0, g = 1500, cap = 0;
       var wd = sTmr(function () { if (!ticked) res(); }, 450); // rAF throttled? skip straight on
@@ -1625,6 +1631,18 @@
         var dt = Math.min((now - last) / 1000, .032); last = now;
         cap += dt;
         ctx.clearRect(0, 0, vw, vh);
+        // shockwaves first, under the paper
+        for (var s = 0; s < shocks.length; s++) {
+          var sh = shocks[s]; sh.t += dt;
+          if (sh.t > 0 && sh.t < .55) {
+            var pr = sh.t / .55, ea = 1 - Math.pow(1 - pr, 3);
+            ctx.beginPath();
+            ctx.arc(cx0, cy0, ea * maxR, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(' + sh.c + ',' + (.45 * (1 - pr)).toFixed(3) + ')';
+            ctx.lineWidth = 1 + (1 - pr) * 4;
+            ctx.stroke();
+          }
+        }
         var alive = 0;
         for (var i = 0; i < parts.length; i++) {
           var p = parts[i];
@@ -1651,7 +1669,7 @@
           }
           ctx.restore();
         }
-        if (!alive || cap > 2.4) { clearTimeout(wd); ctx.clearRect(0, 0, vw, vh); res(); return; }
+        if ((!alive && cap > .7) || cap > 2.8) { clearTimeout(wd); ctx.clearRect(0, 0, vw, vh); res(); return; }
         SHOW.raf = requestAnimationFrame(frame);
       }
       SHOW.raf = requestAnimationFrame(frame);
