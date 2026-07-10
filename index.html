@@ -196,7 +196,6 @@
   .foldshade { position: absolute; inset: 0; background: #232028; opacity: 0; pointer-events: none; z-index: 960; }
   .castshadow { position: absolute; opacity: 0; pointer-events: none; }
   .crease { position: absolute; background: #232028; opacity: 0; pointer-events: none; }
-  .blockwink { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--gold, #a8842c); font-size: 26px; opacity: 0; pointer-events: none; }
   .sealcard {
     position: absolute; z-index: 62; border-radius: 12px; background: #f6f2e7;
     box-shadow: 0 2px 6px rgba(35,32,40,.28), 0 14px 34px rgba(35,32,40,.25);
@@ -1238,8 +1237,6 @@
     if (SHOW.raf) { cancelAnimationFrame(SHOW.raf); SHOW.raf = 0; }
     if (SHOW.trail) { SHOW.trail.width = SHOW.trail.height = 0; SHOW.trail.remove(); SHOW.trail = null; }
     if (SHOW.stage) { SHOW.stage.remove(); SHOW.stage = null; SHOW.box = null; }
-    var winks = document.querySelectorAll('.blockwink');
-    for (var i = 0; i < winks.length; i++) winks[i].remove();
     boardEl.style.visibility = ''; boardEl.style.opacity = '';
     document.documentElement.classList.remove('showtime');
     if (window.__dxcBgRun) window.__dxcBgRun();
@@ -1260,7 +1257,9 @@
     var sig = { signal: SHOW.ac.signal };
     document.addEventListener('visibilitychange', function () { if (document.hidden) finishShow(); }, sig);
     window.addEventListener('pagehide', finishShow, sig);
-    window.addEventListener('resize', finishShow, sig);
+    // NOT 'resize': mobile fires resize when the URL bar collapses mid-scroll.
+    // Only true rotation invalidates the measured geometry.
+    window.addEventListener('orientationchange', finishShow, sig);
     sTmr(finishShow, 16000); // watchdog: no show outlives 16s, whatever happens
     var flaw = day.strikes === 0 && !day.assisted && day.actions.indexOf('C') < 0;
     var reduce = (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)
@@ -1296,8 +1295,16 @@
   function buildBareStage() {
     var stage = sEl('showstage', document.body);
     SHOW.stage = stage;
-    stage.addEventListener('pointerdown', function (ev) { ev.preventDefault(); finishShow(); }, { signal: SHOW.ac.signal });
-    stage.addEventListener('touchmove', function (ev) { ev.preventDefault(); }, { passive: false, signal: SHOW.ac.signal });
+    // skip on a real TAP only — a scroll attempt (finger drags) must never kill the show
+    var downX = 0, downY = 0, downT = 0;
+    stage.addEventListener('pointerdown', function (ev) {
+      ev.preventDefault();
+      downX = ev.clientX; downY = ev.clientY; downT = Date.now();
+    }, { signal: SHOW.ac.signal });
+    stage.addEventListener('pointerup', function (ev) {
+      if (Date.now() - downT < 700 && Math.hypot(ev.clientX - downX, ev.clientY - downY) < 12) finishShow();
+    }, { signal: SHOW.ac.signal });
+    stage.addEventListener('touchmove', function (ev) { ev.preventDefault(); }, { passive: false, signal: SHOW.ac.signal }); // screen holds still under the show
     return stage;
   }
 
@@ -1352,15 +1359,7 @@
           { boxShadow: 'inset 0 0 0 99px rgba(29,90,86,0)' },
           { boxShadow: 'inset 0 0 0 99px rgba(29,90,86,.16)' },
           { boxShadow: 'inset 0 0 0 99px rgba(29,90,86,0)' }], { duration: 260, delay: d, easing: 'ease-out' }));
-      } else {
-        var w = document.createElement('span'); w.className = 'blockwink'; w.textContent = '⤫';
-        cellEls[i].appendChild(w);
-        ps.push(regA(w, [
-          { opacity: 0, transform: 'scale(.8)' },
-          { opacity: .55, transform: 'scale(1.08)' },
-          { opacity: 0, transform: 'scale(1)' }], { duration: 320, delay: d, easing: 'ease-out' }));
-        (function (wk, dd) { sTmr(function () { wk.remove(); }, dd + 460); })(w, d);
-      }
+      } // block cells sit quietly — the ripple passes them by
     }
     return Promise.all(ps);
   }
