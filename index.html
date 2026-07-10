@@ -156,6 +156,55 @@
   .giveup:disabled { opacity: .4; cursor: default; text-decoration: none; }
   .giveup:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
+  /* ---------- the win show: Folded & Sealed ---------- */
+  .showstage { position: fixed; inset: 0; z-index: 60; touch-action: none; cursor: pointer; }
+  .showbox { position: absolute; perspective: 1100px; perspective-origin: 50% 20%; }
+  .showtile {
+    position: absolute; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 0 1px rgba(35,32,40,.55); border-radius: 2px;
+  }
+  .showtile .tl { font-family: var(--sans); font-weight: 700; }
+  .showtile.back { background: #efe9da !important; }
+  .showtile.back .tl { opacity: .12; }
+  .showtile.tblock.back { background: #55504a !important; }
+  .foldgroup { position: absolute; }
+  .foldshade { position: absolute; inset: 0; background: #232028; opacity: 0; pointer-events: none; z-index: 960; }
+  .castshadow { position: absolute; opacity: 0; pointer-events: none; }
+  .crease { position: absolute; background: #232028; opacity: 0; pointer-events: none; }
+  .packetshadow { position: absolute; pointer-events: none; border-radius: 4px; }
+  .fore-edge { position: absolute; pointer-events: none; background: repeating-linear-gradient(to bottom, #e6e1d2 0 1px, #c9c2ae 1px 2px); }
+  .blockwink { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--gold, #a8842c); font-size: 26px; opacity: 0; pointer-events: none; }
+  .sealcard {
+    position: absolute; z-index: 62; border-radius: 12px; background: #f6f2e7;
+    box-shadow: 0 2px 6px rgba(35,32,40,.28), 0 14px 34px rgba(35,32,40,.25);
+    border: 2px solid rgba(35,32,40,.5);
+  }
+  .sealcard.gold { border-color: var(--gold, #a8842c); box-shadow: 0 2px 6px rgba(35,32,40,.28), 0 14px 34px rgba(168,132,44,.4); }
+  .sealface {
+    width: 100%; height: 100%; transform: scaleX(-1); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 6%; padding: 7%; box-sizing: border-box; text-align: center;
+  }
+  .sealface.plain { transform: none; }
+  .sealcrest { width: 38%; height: auto; border-radius: 12%; box-shadow: 0 1px 3px rgba(35,32,40,.3); }
+  .sealtitle { font-family: var(--display); font-weight: 600; color: var(--ink); font-size: 14px; letter-spacing: .04em; white-space: nowrap; }
+  .sealsub {
+    font-family: var(--display); font-weight: 600; color: var(--accent); font-size: 11px; letter-spacing: .12em;
+    border: 1.5px solid var(--accent); border-radius: 4px; padding: 2px 7px; transform: rotate(-6deg); white-space: nowrap;
+  }
+  .sealflaw { font-family: var(--display); font-weight: 600; color: var(--gold, #a8842c); font-size: 10.5px; letter-spacing: .14em; white-space: nowrap; }
+  .skiphint {
+    position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
+    font-family: var(--sans); font-size: 13px; color: var(--ink-soft); background: var(--paper-hi);
+    border: 1px solid var(--paper-dim); border-radius: 999px; padding: 6px 14px; opacity: 0; transition: opacity .5s;
+    pointer-events: none;
+  }
+  .skiphint.on { opacity: .92; }
+  .trailcv { position: fixed; inset: 0; z-index: 55; pointer-events: none; }
+  html.showtime .kbd { opacity: 0 !important; pointer-events: none; transition: opacity .3s; }
+  html.showtime body { overflow: hidden; }
+  #endpanel.enter { animation: panelin .42s ease-out; }
+  @keyframes panelin { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
   /* ---------- keyboard ---------- */
   .kbd { display: none; flex-direction: column; gap: 6px; width: 100%; max-width: 560px; }
   .kbd .krow { display: flex; gap: 5px; justify-content: center; }
@@ -742,7 +791,9 @@
         G.slots[p.s2].cells.forEach(function (c, k) { if (!day.locked[c] && !day.revealed[c]) overlayGhost[c] = p.w2[k]; });
       });
     }
+    if (win) SHOW.pending = 1; // hold the end panel behind the curtain
     saveDay(); render();
+    if (win) sTmr(function () { winShow({}); }, 380); // let the final green pops land first
   }
 
   /* ================= share & coach ================= */
@@ -957,8 +1008,10 @@
 
   function renderEnd() {
     var ep = document.getElementById('endpanel');
-    if (!day.done) { ep.hidden = true; return; }
+    if (!day.done || SHOW.running || SHOW.pending) { ep.hidden = true; return; }
+    var entering = ep.hidden;
     ep.hidden = false;
+    if (entering) { ep.classList.remove('enter'); void ep.offsetWidth; ep.classList.add('enter'); }
     var flawless = day.win && day.strikes === 0 && !day.assisted && day.actions.indexOf('C') < 0;
     var h = '';
     if (day.win) {
@@ -970,9 +1023,11 @@
     } else {
       h += '<h3>Cracked.</h3><div class="verdict">The grid got you today — it happens to the best. The full solution is inked in above.</div>';
     }
-    h += '<div class="rowbtns"><button class="btn primary" id="sharebtn2">Share</button><button class="btn" id="coachbtn">How it unfolded</button><button class="btn" id="statsbtn2">Stats</button></div>';
+    h += '<div class="rowbtns"><button class="btn primary" id="sharebtn2">Share</button><button class="btn" id="coachbtn">How it unfolded</button><button class="btn" id="statsbtn2">Stats</button>'
+      + (day.win ? '<button class="btn" id="replaybtn" title="Watch the fold again">↻ Watch again</button>' : '') + '</div>';
     h += '<div class="countdown" id="countdown"></div>';
     ep.innerHTML = h;
+    if (day.win) document.getElementById('replaybtn').addEventListener('click', function () { winShow({ replay: true }); });
     document.getElementById('sharebtn2').addEventListener('click', doShare);
     document.getElementById('coachbtn').addEventListener('click', function () { document.getElementById('coachbody').innerHTML = coachHtml(); openScrim('coachscrim'); });
     document.getElementById('statsbtn2').addEventListener('click', showStats);
@@ -1080,7 +1135,530 @@
     });
   })();
 
+  /* ================= the win show: Folded & Sealed =================
+     The solved sheet lifts off the desk, folds itself in half six times into a
+     49-layer packet at dead center, peeks at you, flips into a wax-seal card,
+     and takes one Solitaire bounce across the screen — smears and all. */
+  var SHOW = { running: 0, pending: 0, anims: [], timers: [], ac: null, raf: 0, stage: null, box: null, trail: null };
+
+  function sEl(cls, parent) { var d = document.createElement('div'); d.className = cls; if (parent) parent.appendChild(d); return d; }
+  function regA(el2, kf, opt) { var a = el2.animate(kf, opt); SHOW.anims.push(a); return a.finished.catch(function () {}); }
+  function sTmr(fn, ms) { var t = setTimeout(fn, ms); SHOW.timers.push(t); return t; }
+  function sWait(ms) { return new Promise(function (res) { sTmr(res, ms); }); }
+  function raceRaf() { // next frame, or 90ms if frames are throttled (hidden/occluded tabs)
+    return new Promise(function (res) { var done = 0; var fin = function () { if (!done) { done = 1; res(); } };
+      requestAnimationFrame(fin); sTmr(fin, 90); });
+  }
+
+  function finishShow() {
+    if (!SHOW.running) return;
+    SHOW.running = 0; SHOW.pending = 0;
+    if (SHOW.ac) { SHOW.ac.abort(); SHOW.ac = null; }
+    SHOW.anims.forEach(function (a) { try { a.cancel(); } catch (e) {} });
+    SHOW.anims = [];
+    SHOW.timers.forEach(clearTimeout); SHOW.timers = [];
+    if (SHOW.raf) { cancelAnimationFrame(SHOW.raf); SHOW.raf = 0; }
+    if (SHOW.trail) { SHOW.trail.width = SHOW.trail.height = 0; SHOW.trail.remove(); SHOW.trail = null; }
+    if (SHOW.stage) { SHOW.stage.remove(); SHOW.stage = null; SHOW.box = null; }
+    var winks = document.querySelectorAll('.blockwink');
+    for (var i = 0; i < winks.length; i++) winks[i].remove();
+    boardEl.style.visibility = ''; boardEl.style.opacity = '';
+    document.documentElement.classList.remove('showtime');
+    if (window.__dxcBgRun) window.__dxcBgRun();
+    render();
+  }
+
+  function winShow(opts) {
+    opts = opts || {};
+    SHOW.pending = 0;
+    if (SHOW.running) return;
+    if (!day.done || !day.win) { render(); return; }
+    SHOW.running = 1;
+    document.getElementById('endpanel').hidden = true;
+    if (document.hidden) { finishShow(); return; } // never start a show nobody sees
+    document.documentElement.classList.add('showtime');
+    if (window.__dxcBgPause) window.__dxcBgPause();
+    SHOW.ac = new AbortController();
+    var sig = { signal: SHOW.ac.signal };
+    document.addEventListener('visibilitychange', function () { if (document.hidden) finishShow(); }, sig);
+    window.addEventListener('pagehide', finishShow, sig);
+    window.addEventListener('resize', finishShow, sig);
+    sTmr(finishShow, 16000); // watchdog: no show outlives 16s, whatever happens
+    var flaw = day.strikes === 0 && !day.assisted && day.actions.indexOf('C') < 0;
+    var reduce = (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)
+      || (window.visualViewport && visualViewport.scale > 1.05); // pinch-zoom breaks fixed positioning
+    if (reduce) { reducedShow(flaw); return; }
+    fullShow(flaw, !!opts.replay);
+  }
+
+  /* ---------- reduced motion: opacity only, same destination ---------- */
+  function reducedShow(flaw) {
+    var stage = buildBareStage();
+    var br = boardEl.getBoundingClientRect();
+    var ps = [];
+    for (var i = 0; i < N * N; i++) {
+      if (G.bl[i]) continue;
+      ps.push(regA(cellEls[i], [
+        { boxShadow: 'inset 0 0 0 99px rgba(29,90,86,0)' },
+        { boxShadow: 'inset 0 0 0 99px rgba(29,90,86,.16)' },
+        { boxShadow: 'inset 0 0 0 99px rgba(29,90,86,0)' }], { duration: 600, easing: 'ease-out' }));
+    }
+    var cw = cellEls[0].getBoundingClientRect().width;
+    var card = buildSealCard(flaw, Math.min(2.2 * cw * 7 / 3, .6 * window.innerWidth), true);
+    card.style.left = (br.left + br.width / 2) + 'px'; card.style.top = (br.top + br.height / 2) + 'px';
+    card.style.transform = 'translate(-50%,-50%)'; card.style.opacity = '0';
+    stage.appendChild(card);
+    Promise.all(ps)
+      .then(function () { if (!SHOW.running) return; return regA(card, [{ opacity: 0 }, { opacity: 1 }], { duration: 400, fill: 'forwards' }); })
+      .then(function () { return sWait(900); })
+      .then(function () { if (!SHOW.running) return; return regA(card, [{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: 'forwards' }); })
+      .then(finishShow, finishShow);
+  }
+
+  function buildBareStage() {
+    var stage = sEl('showstage', document.body);
+    SHOW.stage = stage;
+    stage.addEventListener('pointerdown', function (ev) { ev.preventDefault(); finishShow(); }, { signal: SHOW.ac.signal });
+    stage.addEventListener('touchmove', function (ev) { ev.preventDefault(); }, { passive: false, signal: SHOW.ac.signal });
+    return stage;
+  }
+
+  /* ---------- the seal card ---------- */
+  function buildSealCard(flaw, size, plainFace) {
+    var card = sEl('sealcard' + (flaw ? ' gold' : ''));
+    card.style.width = size + 'px'; card.style.height = size + 'px';
+    var crestSrc = (document.querySelector('.crest') || {}).src || '';
+    var n = (dayIdx % bank.length) + 1;
+    var face = sEl('sealface' + (plainFace ? ' plain' : ''), card);
+    face.innerHTML = (crestSrc ? '<img class="sealcrest" src="' + crestSrc + '" alt="">' : '')
+      + '<div class="sealtitle">DOUBLE CROSS</div>'
+      + '<div class="sealsub">No. ' + n + ' — SOLVED</div>'
+      + (flaw ? '<div class="sealflaw">FLAWLESS ✦</div>' : '');
+    var scale = size / 190; // face type was designed at ~190px card
+    face.style.fontSize = (100 * scale) + '%';
+    return card;
+  }
+
+  /* ---------- full show ---------- */
+  function fullShow(flaw, replay) {
+    ensureVisible().then(function () {
+      if (!SHOW.running) return;
+      var S = buildStage(flaw);
+      var ready = replay ? Promise.resolve() : ripple();
+      ready
+        .then(function () { if (!SHOW.running) return; return lift(S); })
+        .then(function () { if (!SHOW.running) return; return foldsSeq(S); })
+        .then(function () { if (!SHOW.running) return; return peek(S); })
+        .then(function () { if (!SHOW.running) return; return stampFlip(S); })
+        .then(function () { if (!SHOW.running) return; return coda(S); })
+        .then(function () { if (!SHOW.running) return; return curtain(S); })
+        .then(finishShow, finishShow);
+    });
+  }
+
+  function ensureVisible() {
+    var r = boardEl.getBoundingClientRect();
+    if (r.top < 0 || r.bottom > window.innerHeight) boardEl.scrollIntoView({ block: 'center' });
+    return raceRaf().then(raceRaf);
+  }
+
+  /* P0 — last-lock ripple + gold wink on the blocks */
+  function ripple() {
+    var lastPair = day.coach.length ? PAIRS[day.coach[day.coach.length - 1].p] : PAIRS[0];
+    var oc = G.slots[lastPair.s1].cells[0], orow = (oc / N) | 0, ocol = oc % N;
+    var ps = [];
+    for (var i = 0; i < N * N; i++) {
+      var d = Math.max(Math.abs(((i / N) | 0) - orow), Math.abs((i % N) - ocol)) * 28;
+      if (!G.bl[i]) {
+        var l = cellEls[i].querySelector('.ltr');
+        if (l) ps.push(regA(l, [{ transform: 'scale(1)' }, { transform: 'scale(1.12)' }, { transform: 'scale(1)' }], { duration: 240, delay: d, easing: 'ease-out' }));
+        ps.push(regA(cellEls[i], [
+          { boxShadow: 'inset 0 0 0 99px rgba(29,90,86,0)' },
+          { boxShadow: 'inset 0 0 0 99px rgba(29,90,86,.16)' },
+          { boxShadow: 'inset 0 0 0 99px rgba(29,90,86,0)' }], { duration: 260, delay: d, easing: 'ease-out' }));
+      } else {
+        var w = document.createElement('span'); w.className = 'blockwink'; w.textContent = '⤫';
+        cellEls[i].appendChild(w);
+        ps.push(regA(w, [
+          { opacity: 0, transform: 'scale(.8)' },
+          { opacity: .55, transform: 'scale(1.08)' },
+          { opacity: 0, transform: 'scale(1)' }], { duration: 320, delay: d, easing: 'ease-out' }));
+        (function (wk, dd) { sTmr(function () { wk.remove(); }, dd + 460); })(w, d);
+      }
+    }
+    return Promise.all(ps);
+  }
+
+  /* stage + tiles, measured from the real board */
+  function buildStage(flaw) {
+    var br = boardEl.getBoundingClientRect();
+    var stage = buildBareStage();
+    stage.style.visibility = 'hidden'; // revealed at lift, same frame the board hides
+    var box = sEl('showbox', stage);
+    SHOW.box = box;
+    box.style.left = br.left + 'px'; box.style.top = br.top + 'px';
+    box.style.width = br.width + 'px'; box.style.height = br.height + 'px';
+    var S = { br: br, flaw: flaw, tiles: [], stackH: {}, creases: [] };
+    S.shadow = sEl('packetshadow', box);
+    var rects = [];
+    for (var i = 0; i < N * N; i++) rects.push(cellEls[i].getBoundingClientRect());
+    S.colL = []; S.colR = []; S.rowT = []; S.rowB = [];
+    for (var k = 0; k < N; k++) {
+      S.colL[k] = rects[k].left - br.left; S.colR[k] = rects[k].right - br.left;
+      S.rowT[k] = rects[k * N].top - br.top; S.rowB[k] = rects[k * N].bottom - br.top;
+    }
+    S.hx = function (h) { return (S.colR[h - 1] + S.colL[h]) / 2; };
+    S.hy = function (h) { return (S.rowB[h - 1] + S.rowT[h]) / 2; };
+    for (i = 0; i < N * N; i++) {
+      var cs = getComputedStyle(cellEls[i]);
+      var t = sEl('showtile' + (G.bl[i] ? ' tblock' : ''), box);
+      var x = rects[i].left - br.left, y = rects[i].top - br.top;
+      t.style.left = x + 'px'; t.style.top = y + 'px';
+      t.style.width = rects[i].width + 'px'; t.style.height = rects[i].height + 'px';
+      t.style.background = cs.backgroundColor;
+      if (!G.bl[i]) {
+        var ch = day.locked[i] || day.revealed[i] || day.pencil[i] || '';
+        var ltrEl = cellEls[i].querySelector('.ltr');
+        var span = document.createElement('span'); span.className = 'tl';
+        span.textContent = ch ? ch.toUpperCase() : '';
+        if (ltrEl) { var lcs = getComputedStyle(ltrEl); span.style.color = lcs.color; span.style.fontSize = lcs.fontSize; }
+        t.appendChild(span);
+      }
+      S.tiles.push({ el: t, x: x, y: y, w: rects[i].width, h: rects[i].height, fc: i % N, fr: (i / N) | 0, layer: 0, faceUp: true });
+      S.stackH[(i % N) + ',' + ((i / N) | 0)] = 1;
+    }
+    // seal card, pre-scaled down to packet size, hidden until the flip
+    S.cellW = rects[24].width; // center cell
+    S.cardSize = Math.min(2.4 * S.cellW, .6 * window.innerWidth);
+    S.card = buildSealCard(flaw, S.cardSize, false);
+    S.card.style.visibility = 'hidden';
+    box.appendChild(S.card);
+    // skip hint, first show ever only
+    if (!load('dxc.hinted', 0)) {
+      sTmr(function () {
+        if (!SHOW.running || !SHOW.stage) return;
+        var hnt = sEl('skiphint', SHOW.stage); hnt.textContent = 'tap anywhere to skip';
+        raceRaf().then(function () { hnt.classList.add('on'); });
+        store('dxc.hinted', 1);
+      }, 1500);
+    }
+    return S;
+  }
+
+  /* P1 — lift off the desk */
+  function lift(S) {
+    boardEl.style.visibility = 'hidden';
+    SHOW.stage.style.visibility = '';
+    S.shadow.style.left = '0px'; S.shadow.style.top = '0px';
+    S.shadow.style.width = S.br.width + 'px'; S.shadow.style.height = S.br.height + 'px';
+    S.shadow.style.boxShadow = '0 10px 24px rgba(35,32,40,.3)';
+    regA(SHOW.box, [{ transform: 'scale(1)' }, { transform: 'scale(1.03)' }], { duration: 260, easing: 'ease-out', fill: 'forwards' });
+    regA(S.shadow, [{ opacity: 0 }, { opacity: 1 }], { duration: 260, fill: 'forwards' });
+    return sWait(280);
+  }
+
+  /* P2 — six folds (math verified in pipeline/test_foldmath.js) */
+  var FOLD_DEFS = [
+    { ax: 'x', h: 4, side: 'hi', inF: function (t) { return t.fc >= 4; }, mir: function (t) { return { fc: 7 - t.fc, fr: t.fr }; } },
+    { ax: 'y', h: 4, side: 'hi', inF: function (t) { return t.fr >= 4; }, mir: function (t) { return { fc: t.fc, fr: 7 - t.fr }; } },
+    { ax: 'x', h: 2, side: 'lo', inF: function (t) { return t.fc <= 1; }, mir: function (t) { return { fc: 3 - t.fc, fr: t.fr }; } },
+    { ax: 'y', h: 2, side: 'lo', inF: function (t) { return t.fr <= 1; }, mir: function (t) { return { fc: t.fc, fr: 3 - t.fr }; } },
+    { ax: 'x', h: 3, side: 'lo', inF: function (t) { return t.fc === 2; }, mir: function (t) { return { fc: 3, fr: t.fr }; } },
+    { ax: 'y', h: 3, side: 'lo', inF: function (t) { return t.fr === 2; }, mir: function (t) { return { fc: t.fc, fr: 3 }; } },
+  ];
+  var FOLD_DUR = [560, 510, 470, 430, 390, 350];
+
+  function foldsSeq(S) {
+    var p = Promise.resolve();
+    FOLD_DEFS.forEach(function (f, i) {
+      p = p.then(function () { if (!SHOW.running) return; return doFold(S, f, i); });
+    });
+    return p;
+  }
+
+  function bboxOfTiles(tiles) {
+    var x1 = 1e9, y1 = 1e9, x2 = -1e9, y2 = -1e9;
+    tiles.forEach(function (t) { x1 = Math.min(x1, t.x); y1 = Math.min(y1, t.y); x2 = Math.max(x2, t.x + t.w); y2 = Math.max(y2, t.y + t.h); });
+    return { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+  }
+
+  function doFold(S, f, fi) {
+    var flap = S.tiles.filter(f.inF);
+    var gb = bboxOfTiles(flap);
+    var vert = f.ax === 'x';
+    var hingePx = vert ? S.hx(f.h) : S.hy(f.h);
+    // group with its hinge edge exactly on the hinge line
+    if (vert) { if (f.side === 'hi') gb.w = gb.x + gb.w - hingePx, gb.x = hingePx; else gb.w = hingePx - gb.x; }
+    else { if (f.side === 'hi') gb.h = gb.y + gb.h - hingePx, gb.y = hingePx; else gb.h = hingePx - gb.y; }
+    var g = sEl('foldgroup', SHOW.box);
+    g.style.left = gb.x + 'px'; g.style.top = gb.y + 'px'; g.style.width = gb.w + 'px'; g.style.height = gb.h + 'px';
+    g.style.zIndex = 900; g.style.willChange = 'transform';
+    var origin, rot;
+    if (vert) { if (f.side === 'hi') { origin = '0% 50%'; rot = -180; } else { origin = '100% 50%'; rot = 180; } }
+    else { if (f.side === 'hi') { origin = '50% 0%'; rot = 180; } else { origin = '50% 100%'; rot = -180; } }
+    g.style.transformOrigin = origin;
+    var rotStr = function (deg) { return (vert ? 'rotateY(' : 'rotateX(') + deg + 'deg) translateZ(0)'; };
+    g.style.transform = rotStr(0);
+    flap.forEach(function (t) {
+      t.el.style.left = (t.x - gb.x) + 'px'; t.el.style.top = (t.y - gb.y) + 'px';
+      g.appendChild(t.el);
+    });
+    var shade = sEl('foldshade', g);
+    // cast shadow over the landing zone, anchored at the hinge
+    var csh = sEl('castshadow', SHOW.box);
+    var land = { x: vert ? (f.side === 'hi' ? hingePx - gb.w : hingePx) : gb.x, y: vert ? gb.y : (f.side === 'hi' ? hingePx - gb.h : hingePx), w: gb.w, h: gb.h };
+    csh.style.left = land.x + 'px'; csh.style.top = land.y + 'px'; csh.style.width = land.w + 'px'; csh.style.height = land.h + 'px';
+    var toward = vert ? (f.side === 'hi' ? 'to left' : 'to right') : (f.side === 'hi' ? 'to top' : 'to bottom');
+    csh.style.background = 'linear-gradient(' + toward + ', rgba(35,32,40,.35), rgba(35,32,40,0))';
+    csh.style.transformOrigin = vert ? (f.side === 'hi' ? '100% 50%' : '0% 50%') : (f.side === 'hi' ? '50% 100%' : '50% 0%');
+    var csScale = function (s) { return vert ? 'scaleX(' + s + ')' : 'scaleY(' + s + ')'; };
+    csh.style.transform = csScale(.15);
+    var dur = FOLD_DUR[fi], aDur = Math.round(dur * .55), bDur = dur - aDur;
+    return raceRaf().then(function () {
+      if (!SHOW.running) return;
+      return Promise.all([
+        regA(g, [{ transform: rotStr(0) }, { transform: rotStr(rot / 2) }], { duration: aDur, easing: 'cubic-bezier(.5,0,.85,.5)', fill: 'forwards' }),
+        regA(shade, [{ opacity: 0 }, { opacity: .18 }], { duration: aDur, fill: 'forwards' }),
+        regA(csh, [{ opacity: 0, transform: csScale(.15) }, { opacity: .35, transform: csScale(.55) }], { duration: aDur, fill: 'forwards' }),
+      ]);
+    }).then(function () {
+      if (!SHOW.running) return;
+      // 90°, edge-on and invisible: swap faces, invert stacking within each footprint
+      var byFoot = {};
+      flap.forEach(function (t) { var k = t.fc + ',' + t.fr; (byFoot[k] = byFoot[k] || []).push(t); });
+      Object.keys(byFoot).forEach(function (k) {
+        var n = byFoot[k].length;
+        byFoot[k].forEach(function (t) { t.el.style.zIndex = n - 1 - t.layer; t.el.classList.toggle('back', t.faceUp); });
+      });
+      return Promise.all([
+        regA(g, [{ transform: rotStr(rot / 2) }, { transform: rotStr(rot) }], { duration: bDur, easing: 'cubic-bezier(.15,.5,.3,1)', fill: 'forwards' }),
+        regA(shade, [{ opacity: .18 }, { opacity: 0 }], { duration: bDur, fill: 'forwards' }),
+        regA(csh, [{ opacity: .35, transform: csScale(.55) }, { opacity: .28, transform: csScale(1), offset: .7 }, { opacity: 0, transform: csScale(1) }], { duration: bDur, fill: 'forwards' }),
+      ]);
+    }).then(function () {
+      if (!SHOW.running) return;
+      // bake: reparent at mirrored coords with fresh layer bookkeeping
+      var byFoot = {};
+      flap.forEach(function (t) { var k = t.fc + ',' + t.fr; (byFoot[k] = byFoot[k] || []).push(t); });
+      Object.keys(byFoot).forEach(function (k) {
+        var group = byFoot[k], n = S.stackH[k];
+        var m = f.mir(group[0]), tk = m.fc + ',' + m.fr;
+        var base = S.stackH[tk] || 0;
+        group.forEach(function (t) {
+          t.layer = base + (n - 1 - t.layer);
+          t.fc = m.fc; t.fr = m.fr;
+          t.faceUp = !t.faceUp;
+          if (vert) t.x = 2 * hingePx - t.x - t.w; else t.y = 2 * hingePx - t.y - t.h;
+          t.el.style.left = t.x + 'px'; t.el.style.top = t.y + 'px';
+          t.el.style.zIndex = t.layer;
+          t.el.classList.toggle('back', !t.faceUp);
+          SHOW.box.appendChild(t.el);
+        });
+        S.stackH[tk] = base + n; delete S.stackH[k];
+      });
+      g.remove(); csh.remove();
+      addCrease(S, f, hingePx);
+      dressPacket(S, fi);
+      return regA(SHOW.box, [
+        { transform: 'scale(1.03) translateY(0)' },
+        { transform: 'scale(1.03) translateY(1.5px)' },
+        { transform: 'scale(1.03) translateY(0)' }], { duration: 90 });
+    }).then(function () { return sWait(60); });
+  }
+
+  function packetBBox(S) {
+    var keys = Object.keys(S.stackH);
+    var x1 = 1e9, y1 = 1e9, x2 = -1e9, y2 = -1e9;
+    keys.forEach(function (k) {
+      var c = +k.split(',')[0], r = +k.split(',')[1];
+      x1 = Math.min(x1, S.colL[c]); x2 = Math.max(x2, S.colR[c]);
+      y1 = Math.min(y1, S.rowT[r]); y2 = Math.max(y2, S.rowB[r]);
+    });
+    return { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+  }
+
+  function addCrease(S, f, hingePx) {
+    var bb = packetBBox(S);
+    var cr = sEl('crease', SHOW.box);
+    if (f.ax === 'x') { cr.style.left = (hingePx - .5) + 'px'; cr.style.top = bb.y + 'px'; cr.style.width = '1px'; cr.style.height = bb.h + 'px'; }
+    else { cr.style.left = bb.x + 'px'; cr.style.top = (hingePx - .5) + 'px'; cr.style.width = bb.w + 'px'; cr.style.height = '1px'; }
+    cr.style.zIndex = 950;
+    S.creases.push(cr);
+    regA(cr, [{ opacity: 0 }, { opacity: .12 }], { duration: 120, fill: 'forwards' });
+  }
+
+  function dressPacket(S, fi) {
+    var bb = packetBBox(S);
+    S.shadow.style.left = bb.x + 'px'; S.shadow.style.top = bb.y + 'px';
+    S.shadow.style.width = bb.w + 'px'; S.shadow.style.height = bb.h + 'px';
+    S.shadow.style.boxShadow = '0 ' + (2 + 2 * (fi + 1)) + 'px ' + (6 + 3 * (fi + 1)) + 'px rgba(35,32,40,' + (0.18 + 0.05 * (fi + 1)).toFixed(2) + ')';
+    if (!S.edge) S.edge = sEl('fore-edge', SHOW.box);
+    S.edge.style.left = bb.x + 'px'; S.edge.style.top = (bb.y + bb.h) + 'px';
+    S.edge.style.width = bb.w + 'px'; S.edge.style.height = Math.min(2 * (fi + 1), 12) + 'px';
+    if (S.flaw) S.edge.style.background = 'repeating-linear-gradient(to bottom, #e6e1d2 0 1px, #a8842c 1px 2px)';
+    // creases outside the shrinking packet vanish with it
+    S.creases.forEach(function (cr) {
+      var cx = parseFloat(cr.style.left), cy = parseFloat(cr.style.top);
+      if (cx < bb.x - 1 || cx > bb.x + bb.w + 1 || cy < bb.y - 1 || cy > bb.y + bb.h + 1) cr.style.opacity = '0';
+    });
+  }
+
+  /* P2.5 — the peek */
+  function peek(S) {
+    var bb = packetBBox(S);
+    var pg = sEl('foldgroup', SHOW.box);
+    pg.style.left = bb.x + 'px'; pg.style.top = bb.y + 'px'; pg.style.width = bb.w + 'px'; pg.style.height = bb.h + 'px';
+    pg.style.zIndex = 900;
+    S.tiles.forEach(function (t) {
+      t.el.style.left = (t.x - bb.x) + 'px'; t.el.style.top = (t.y - bb.y) + 'px';
+      pg.appendChild(t.el);
+    });
+    S.pg = pg; S.pbb = bb;
+    return sWait(60).then(function () {
+      if (!SHOW.running) return;
+      return regA(pg, [
+        { transform: 'rotateZ(0deg) translateY(0)' },
+        { transform: 'rotateZ(-2.5deg) translateY(-3px)' },
+        { transform: 'rotateZ(0deg) translateY(0)' }], { duration: 320, easing: 'ease-in-out' });
+    });
+  }
+
+  /* P3 — stamp flip: packet becomes the seal card */
+  function stampFlip(S) {
+    var bb = S.pbb;
+    var size = S.cardSize, s0 = bb.w / size;
+    S.card.style.left = (bb.x + bb.w / 2 - size / 2) + 'px';
+    S.card.style.top = (bb.y + bb.h / 2 - size / 2) + 'px';
+    S.card.style.transform = 'rotateY(-90deg) scale(' + s0 + ')';
+    return regA(S.pg, [
+      { transform: 'rotateY(0deg) scale(1)' },
+      { transform: 'rotateY(-90deg) scale(1.35)' }], { duration: 385, easing: 'cubic-bezier(.5,0,.85,.5)', fill: 'forwards' })
+      .then(function () {
+        if (!SHOW.running) return;
+        S.pg.style.display = 'none';
+        S.shadow.style.opacity = '0'; if (S.edge) S.edge.style.opacity = '0';
+        S.creases.forEach(function (cr) { cr.style.opacity = '0'; });
+        S.card.style.visibility = '';
+        return regA(S.card, [
+          { transform: 'rotateY(-90deg) scale(' + s0 + ')' },
+          { transform: 'rotateY(-180deg) scale(1)' }], { duration: 315, easing: 'cubic-bezier(.15,.5,.3,1)', fill: 'forwards' });
+      })
+      .then(function () {
+        if (!SHOW.running) return;
+        return regA(S.card, [
+          { transform: 'rotateY(-180deg) scale(1)' },
+          { transform: 'rotateY(-180deg) scale(.94)' },
+          { transform: 'rotateY(-180deg) scale(.97)' }], { duration: 120, fill: 'forwards' });
+      })
+      .then(function () { return sWait(300); });
+  }
+
+  /* P4 — solitaire coda: bounce + smear (flawless: three trails, one spinning gold) */
+  function coda(S) {
+    var rect = S.card.getBoundingClientRect();
+    // un-mirror trick: rotateY(-180)+scaleX(-1) === identity, so swap to plain rendering for the flight
+    S.card.querySelector('.sealface').classList.add('plain');
+    // reparent the card to the stage at fixed coords; hide everything else
+    S.card.style.left = rect.left + 'px'; S.card.style.top = rect.top + 'px';
+    S.card.style.width = rect.width + 'px'; S.card.style.height = rect.height + 'px';
+    S.card.style.transform = '';
+    SHOW.stage.appendChild(S.card);
+    SHOW.box.style.display = 'none';
+    boardEl.style.visibility = ''; boardEl.style.opacity = '0'; // curtain target, faded in during trails
+    var cw = rect.width, chh = rect.height;
+    var cv = document.createElement('canvas'); cv.className = 'trailcv';
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var vw = window.innerWidth, vh = (window.visualViewport ? visualViewport.height : window.innerHeight);
+    cv.width = Math.round(vw * dpr); cv.height = Math.round(window.innerHeight * dpr);
+    document.body.insertBefore(cv, SHOW.stage);
+    SHOW.trail = cv;
+    var ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
+    return makeSprite(S, cw, chh, dpr).then(function (sprites) {
+      if (!SHOW.running) return;
+      return new Promise(function (res) {
+        var floor = vh - chh;
+        var bodies = [{ x: rect.left, y: rect.top, vx: 420, vy: -350, e: .62, bounces: 0, sprite: sprites.main, live: true, dom: true, spin: 0, a: 0 }];
+        var shed = !S.flaw; // non-flawless: never shed
+        var last = 0, ticked = 0, g = 2400;
+        var wd = sTmr(function () { if (!ticked) { S.card.style.visibility = 'hidden'; res(); } }, 450); // rAF throttled? skip the coda
+        function frame(now) {
+          if (!SHOW.running) { res(); return; }
+          ticked = 1;
+          if (!last) last = now;
+          var dt = Math.min((now - last) / 1000, .032); last = now;
+          var alive = 0;
+          bodies.forEach(function (b) {
+            if (!b.live) return;
+            // stamp BEFORE moving — the smear
+            if (b.spin) { ctx.save(); ctx.translate(b.x + cw / 2, b.y + chh / 2); ctx.rotate(b.a); ctx.drawImage(b.sprite, -cw / 2, -chh / 2, cw, chh); ctx.restore(); }
+            else ctx.drawImage(b.sprite, b.x, b.y, cw, chh);
+            var steps = Math.max(1, Math.ceil(dt / .016));
+            var sdt = dt / steps;
+            for (var s = 0; s < steps; s++) {
+              b.vy += g * sdt; b.x += b.vx * sdt; b.y += b.vy * sdt; b.a += b.spin * sdt;
+              if (b.y > floor) {
+                b.y = floor; b.vy = -Math.abs(b.vy) * b.e; b.bounces++;
+                if (Math.abs(b.vy) < 120) b.vy = -(120 + Math.random() * 80);
+                b.spin *= .85;
+                if (b.dom && S.flaw && !shed) {
+                  shed = true; // flawless: the deal — two echoes, one spinning gold
+                  bodies.push({ x: b.x, y: b.y, vx: 300, vy: -430, e: .62, bounces: 0, sprite: sprites.echo, live: true, spin: 0, a: 0 });
+                  bodies.push({ x: b.x, y: b.y, vx: 540, vy: -270, e: .82, bounces: 0, sprite: sprites.gold, live: true, spin: 2.4, a: 0 });
+                }
+              }
+            }
+            if (b.x > vw + cw || b.bounces >= 5) { b.live = false; if (b.dom) S.card.style.visibility = 'hidden'; }
+            else alive++;
+            if (b.dom) S.card.style.transform = 'translate(' + (b.x - rect.left) + 'px,' + (b.y - rect.top) + 'px) scale(.97)';
+          });
+          if (!alive) { clearTimeout(wd); res(); return; }
+          SHOW.raf = requestAnimationFrame(frame);
+        }
+        SHOW.raf = requestAnimationFrame(frame);
+      });
+    });
+  }
+
+  /* the pre-rendered card sprite(s) for canvas stamping */
+  function makeSprite(S, cw, chh, dpr) {
+    var fload = (document.fonts && document.fonts.load) ? document.fonts.load('600 32px "Fraunces Masthead"').catch(function () {}) : Promise.resolve();
+    return Promise.resolve(fload).then(function () {
+      function draw(goldTint) {
+        var c = document.createElement('canvas');
+        c.width = Math.round(cw * dpr); c.height = Math.round(chh * dpr);
+        var x = c.getContext('2d'); x.scale(dpr, dpr);
+        var r = Math.min(12, cw * .09);
+        x.beginPath();
+        x.moveTo(r, 0); x.arcTo(cw, 0, cw, chh, r); x.arcTo(cw, chh, 0, chh, r); x.arcTo(0, chh, 0, 0, r); x.arcTo(0, 0, cw, 0, r); x.closePath();
+        x.fillStyle = goldTint ? '#f3ead2' : '#f6f2e7'; x.fill();
+        x.lineWidth = 2; x.strokeStyle = (S.flaw || goldTint) ? '#a8842c' : 'rgba(35,32,40,.55)'; x.stroke();
+        var crest = document.querySelector('.crest');
+        var cwid = cw * .38;
+        if (crest && crest.complete) { try { x.drawImage(crest, (cw - cwid) / 2, chh * .12, cwid, cwid); } catch (e) {} }
+        x.textAlign = 'center'; x.fillStyle = '#232028';
+        x.font = '600 ' + Math.round(cw * .085) + 'px "Fraunces Masthead", Georgia, serif';
+        x.fillText('DOUBLE CROSS', cw / 2, chh * .68);
+        x.fillStyle = '#1d5a56';
+        x.font = '600 ' + Math.round(cw * .062) + 'px "Fraunces Masthead", Georgia, serif';
+        x.fillText('No. ' + ((dayIdx % bank.length) + 1) + ' — SOLVED', cw / 2, chh * .78);
+        if (S.flaw) { x.fillStyle = '#a8842c'; x.font = '600 ' + Math.round(cw * .055) + 'px "Fraunces Masthead", Georgia, serif'; x.fillText('FLAWLESS ✦', cw / 2, chh * .87); }
+        return c;
+      }
+      return { main: draw(false), echo: draw(false), gold: draw(true) };
+    });
+  }
+
+  /* P5 — curtain: the solved board re-emerges through the dissolving trails */
+  function curtain(S) {
+    var ps = [regA(boardEl, [{ opacity: 0 }, { opacity: 1 }], { duration: 700, easing: 'ease-out', fill: 'forwards' })];
+    if (SHOW.trail) ps.push(regA(SHOW.trail, [{ opacity: 1 }, { opacity: 0 }], { duration: 600, easing: 'ease-in', fill: 'forwards' }));
+    return Promise.all(ps);
+  }
+
+  window.__dxc = { winShow: winShow, finishShow: finishShow, SHOW: SHOW };
+
   document.addEventListener('keydown', function (ev) {
+    if (SHOW.running) { finishShow(); ev.preventDefault(); return; }
     if (ev.key === 'Escape') { closeScrims(); return; }
     if (document.querySelector('.scrim.open')) return;
     if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
@@ -1152,6 +1730,8 @@
       if (!reduce && !document.hidden) raf = requestAnimationFrame(step);
     }
     function run() { cancelAnimationFrame(raf); if (reduce) draw(); else raf = requestAnimationFrame(step); }
+    window.__dxcBgPause = function () { cancelAnimationFrame(raf); };
+    window.__dxcBgRun = run;
     var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { resize(); seed(); draw(); }, 150); });
     document.addEventListener('visibilitychange', function () { if (!document.hidden) run(); else cancelAnimationFrame(raf); });
     resize(); seed(); run();
