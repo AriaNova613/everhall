@@ -412,34 +412,23 @@
   <div class="modal">
     <button class="mclose" data-close="helpscrim" aria-label="Close">×</button>
     <h2><span class="t1">Double</span> ⤫ <span class="t2">Cross</span></h2>
-    <p class="lead">A little daily crossword with a crooked heart.</p>
+    <p class="lead">A daily crossword where every clue has <b>two</b> answers.</p>
     <div class="howstep"><div class="hownum">1</div><div>
-      <b>Every clue has two answers.</b>
-      <p>“Big cat (4)” might be <b>LION</b> and <b>PUMA</b>. Each clue owns two twin slots of the same length — mirror images across the grid. The clue never says which answer lives where.</p>
+      <b>Two answers, two matching slots.</b>
+      <p>“Big cat (4)” has two answers: <b>LION</b> and <b>PUMA</b>. They go in the two slots on that clue’s card — but the clue won’t tell you which answer goes where. That’s the puzzle.</p>
     </div></div>
     <div class="howstep"><div class="hownum">2</div><div>
-      <b>Pencil freely. The grid is your witness.</b>
-      <p>Type letters anywhere — pencil is never judged. Placement is proved by the crossings: if a crossing pair writes a <b>U</b> into a square either way round, whatever crosses it must agree. The <b>⇄</b> button flips a pair between its two homes without retyping.</p>
-      <div class="minidemo">Both homes of 2-Down put a <b>U</b> in that square → 1-Across must be P<b>U</b>MA, not LION.</div>
+      <b>The crossing letters give it away.</b>
+      <p>Type your guesses — nothing is checked while you work, so guess freely. Where words cross, their letters must match. Only one arrangement makes every crossing agree.</p>
+      <div class="minidemo">If the crossing word needs a <b>U</b> in that square, then P<b>U</b>MA goes here — not LION.</div>
+      <p>Tap <b>⇄</b> to switch a pair between its two slots without retyping.</p>
     </div></div>
     <div class="howstep"><div class="hownum">3</div><div>
-      <b>Fill the whole grid, then SEAL it. Once.</b>
-      <p>The seal judges everything at the end. Right everywhere — the day is yours. Wrong — a lamp lights, true entries flash <b class="t1">green</b>, wrong ones flash <b style="color:var(--miss)">red</b> and stay softly underlined until you rework them. The fourth lamp ends the day.</p>
-      <p>Stuck? The <b>💡 chisel</b> buys one true letter for a lamp. The <b>📖 almanac</b> settles a pair of your choosing free — one page a day, another when a seal breaks — but the day is marked <i>assisted</i>.</p>
+      <b>Fill every square, then press SEAL.</b>
+      <p>All correct — you win. Any mistake costs one of your <b>four lamps</b>: correct entries flash <b class="t1">green</b>, wrong ones flash <b style="color:var(--miss)">red</b> and stay underlined until you fix them. Lose all four lamps and the puzzle is lost.</p>
+      <p>Stuck? <b>💡 Chisel</b>: reveals one letter, costs a lamp. <b>📖 Almanac</b>: fills in one pair of your choice, free — but the day counts as assisted.</p>
     </div></div>
-    <p class="lead" style="margin-bottom:0">Seal true on your very first press, unaided: <b>✦ Flawless</b>.</p>
-  </div>
-</div>
-
-<div class="scrim" id="rulescrim" role="dialog" aria-modal="true" aria-label="The rules have deepened">
-  <div class="modal">
-    <button class="mclose" data-close="rulescrim" aria-label="Close">×</button>
-    <h2>The rules have deepened</h2>
-    <p class="lead">The locks are gone. Now you pencil the <i>whole</i> grid, then press <b>SEAL</b> — once, at the end.</p>
-    <div class="howstep"><div class="hownum">⤫</div><div>
-      <p>A wrong seal lights a lamp: true entries flash <b class="t1">green</b>, wrong ones flash <b style="color:var(--miss)">red</b> and stay underlined until you rework them. Four lamps still end the day. The 💡 chisel and 📖 almanac are still here when you need them.</p>
-      <p><b>Your streak and every stat carry on exactly as they are</b> — and your first stumble under the new rules is on the house.</p>
-    </div></div>
+    <p class="lead" style="margin-bottom:0">Win on your first press, no help: <b>✦ Flawless</b>.</p>
   </div>
 </div>
 
@@ -536,8 +525,7 @@
   /* ================= persistence ================= */
   function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function load(k, dflt) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : dflt; } catch (e) { return dflt; } }
-  var CUTOVER_IDX = 4; // day the seal rules shipped; first loss within a week of it is amnestied
-  function defaultStats() { return { sv: 2, played: 0, wins: 0, streak: 0, maxStreak: 0, flawless: 0, firstPress: 0, cold: 0, assisted: 0, rulesAmnesty: 0, histo: { 0: 0, 1: 0, 2: 0, 3: 0, L: 0 }, lastIdx: -9, graceWeek: '' }; }
+  function defaultStats() { return { sv: 2, played: 0, wins: 0, streak: 0, maxStreak: 0, flawless: 0, firstPress: 0, cold: 0, assisted: 0, histo: { 0: 0, 1: 0, 2: 0, 3: 0, L: 0 }, lastIdx: -9, graceWeek: '' }; }
   var stats = (function () {
     var d = defaultStats(), s = load('dxc.stats', null);
     if (!s || typeof s !== 'object') return d;
@@ -843,12 +831,7 @@
         if (stats.streak > stats.maxStreak) stats.maxStreak = stats.streak;
       } else {
         stats.histo.L++;
-        if (!stats.rulesAmnesty && day.idx < CUTOVER_IDX + 7) {
-          stats.rulesAmnesty = 1; // the new rules owe you one — streak stands
-          setTimeout(function () { toast('The new rules owe you one — your streak stands.'); }, 900);
-        } else {
-          stats.streak = 0;
-        }
+        stats.streak = 0;
         day.actions.push('X');
       }
       stats.lastIdx = day.idx;
@@ -1187,7 +1170,7 @@
 
   /* ================= modals ================= */
   function openScrim(id) { document.getElementById(id).classList.add('open'); }
-  function closeScrims() { ['helpscrim', 'rulescrim', 'statsscrim', 'coachscrim'].forEach(function (id) { document.getElementById(id).classList.remove('open'); }); }
+  function closeScrims() { ['helpscrim', 'statsscrim', 'coachscrim'].forEach(function (id) { document.getElementById(id).classList.remove('open'); }); }
   document.querySelectorAll('.mclose').forEach(function (b) { b.addEventListener('click', closeScrims); });
   document.querySelectorAll('.scrim').forEach(function (s) { s.addEventListener('pointerdown', function (ev) { if (ev.target === s) closeScrims(); }); });
   document.getElementById('helpbtn').addEventListener('click', function () { openScrim('helpscrim'); });
@@ -1865,8 +1848,7 @@
     });
   }
   selectPair(0, true);
-  if (!load('dxc.helped', 0)) { openScrim('helpscrim'); store('dxc.helped', 1); store('dxc.helped2', 1); }
-  else if (!load('dxc.helped2', 0)) { openScrim('rulescrim'); store('dxc.helped2', 1); }
+  if (!load('dxc.helped', 0)) { openScrim('helpscrim'); store('dxc.helped', 1); }
 
   // quiet sanity check: derived slots must fit the pair words
   PAIRS.forEach(function (p) {
