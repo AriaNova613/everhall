@@ -196,8 +196,6 @@
   .foldshade { position: absolute; inset: 0; background: #232028; opacity: 0; pointer-events: none; z-index: 960; }
   .castshadow { position: absolute; opacity: 0; pointer-events: none; }
   .crease { position: absolute; background: #232028; opacity: 0; pointer-events: none; }
-  .packetshadow { position: absolute; pointer-events: none; border-radius: 4px; }
-  .fore-edge { position: absolute; pointer-events: none; background: repeating-linear-gradient(to bottom, #e6e1d2 0 1px, #c9c2ae 1px 2px); }
   .blockwink { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--gold, #a8842c); font-size: 26px; opacity: 0; pointer-events: none; }
   .sealcard {
     position: absolute; z-index: 62; border-radius: 12px; background: #f6f2e7;
@@ -1377,7 +1375,6 @@
     box.style.left = br.left + 'px'; box.style.top = br.top + 'px';
     box.style.width = br.width + 'px'; box.style.height = br.height + 'px';
     var S = { br: br, flaw: flaw, tiles: [], stackH: {} };
-    S.shadow = sEl('packetshadow', box);
     var rects = [];
     for (var i = 0; i < N * N; i++) rects.push(cellEls[i].getBoundingClientRect());
     S.colL = []; S.colR = []; S.rowT = []; S.rowB = [];
@@ -1427,11 +1424,7 @@
   function lift(S) {
     boardEl.style.visibility = 'hidden';
     SHOW.stage.style.visibility = '';
-    S.shadow.style.left = '0px'; S.shadow.style.top = '0px';
-    S.shadow.style.width = S.br.width + 'px'; S.shadow.style.height = S.br.height + 'px';
-    S.shadow.style.boxShadow = '0 10px 24px rgba(35,32,40,.3)';
     regA(SHOW.box, [{ transform: 'scale(1)' }, { transform: 'scale(1.03)' }], { duration: 260, easing: 'ease-out', fill: 'forwards' });
-    regA(S.shadow, [{ opacity: 0 }, { opacity: 1 }], { duration: 260, fill: 'forwards' });
     return sWait(280);
   }
 
@@ -1506,7 +1499,11 @@
       flap.forEach(function (t) { var k = t.fc + ',' + t.fr; (byFoot[k] = byFoot[k] || []).push(t); });
       Object.keys(byFoot).forEach(function (k) {
         var n = byFoot[k].length;
-        byFoot[k].forEach(function (t) { t.el.style.zIndex = n - 1 - t.layer; t.el.classList.toggle('back', t.faceUp); });
+        byFoot[k].forEach(function (t) {
+          t.el.style.zIndex = n - 1 - t.layer;
+          t.el.classList.toggle('back', t.faceUp);
+          t.el.style.visibility = (t.layer === 0) ? '' : 'hidden'; // past 90° you see what was the underside
+        });
       });
       return Promise.all([
         regA(g, [{ transform: rotStr(rot / 2) }, { transform: rotStr(rot) }], { duration: bDur, easing: 'cubic-bezier(.15,.5,.3,1)', fill: 'forwards' }),
@@ -1536,7 +1533,7 @@
       });
       g.remove(); csh.remove();
       addCrease(S, f, hingePx);
-      dressPacket(S, fi);
+      tidyStacks(S);
       return regA(SHOW.box, [
         { transform: 'scale(1.03) translateY(0)' },
         { transform: 'scale(1.03) translateY(1.5px)' },
@@ -1572,15 +1569,16 @@
     ], { duration: 480 }).then(function () { cr.remove(); });
   }
 
-  function dressPacket(S, fi) {
-    var bb = packetBBox(S);
-    S.shadow.style.left = bb.x + 'px'; S.shadow.style.top = bb.y + 'px';
-    S.shadow.style.width = bb.w + 'px'; S.shadow.style.height = bb.h + 'px';
-    S.shadow.style.boxShadow = '0 ' + (2 + 2 * (fi + 1)) + 'px ' + (6 + 3 * (fi + 1)) + 'px rgba(35,32,40,' + (0.18 + 0.05 * (fi + 1)).toFixed(2) + ')';
-    if (!S.edge) S.edge = sEl('fore-edge', SHOW.box);
-    S.edge.style.left = bb.x + 'px'; S.edge.style.top = (bb.y + bb.h) + 'px';
-    S.edge.style.width = bb.w + 'px'; S.edge.style.height = Math.min(2 * (fi + 1), 12) + 'px';
-    if (S.flaw) S.edge.style.background = 'repeating-linear-gradient(to bottom, #e6e1d2 0 1px, #a8842c 1px 2px)';
+  function tidyStacks(S) {
+    // only the top sheet of each stack exists visually — clean fold, no pile
+    var top = {};
+    S.tiles.forEach(function (t) {
+      var k = t.fc + ',' + t.fr;
+      if (!top[k] || t.layer > top[k].layer) top[k] = t;
+    });
+    S.tiles.forEach(function (t) {
+      t.el.style.visibility = (top[t.fc + ',' + t.fr] === t) ? '' : 'hidden';
+    });
   }
 
   /* P2.5 — the peek */
@@ -1616,7 +1614,6 @@
       .then(function () {
         if (!SHOW.running) return;
         S.pg.style.display = 'none';
-        S.shadow.style.opacity = '0'; if (S.edge) S.edge.style.opacity = '0';
         S.card.style.visibility = '';
         return regA(S.card, [
           { transform: 'rotateY(-90deg) scale(' + s0 + ')' },
@@ -1635,8 +1632,13 @@
   /* P4 — the burst: the sealed packet explodes into paper confetti;
      the solved board re-emerges beneath the falling pieces */
   function burst(S) {
-    var rect = S.card.getBoundingClientRect();
-    var cx0 = rect.left + rect.width / 2, cy0 = rect.top + rect.height / 2;
+    // burst origin from the packet's true home — the centre cell's measured geometry —
+    // never from a 3D-projected rect, which can misreport on mobile
+    var bx = S.br.left + S.br.width / 2, by = S.br.top + S.br.height / 2;
+    var px = S.br.left + (S.colL[3] + S.colR[3]) / 2, py = S.br.top + (S.rowT[3] + S.rowB[3]) / 2;
+    var cx0 = bx + (px - bx) * 1.03, cy0 = by + (py - by) * 1.03; // through the lift scale
+    cx0 = Math.max(30, Math.min(cx0, window.innerWidth - 30));
+    cy0 = Math.max(30, Math.min(cy0, window.innerHeight - 30));
     // anticipation squash, then pop
     return regA(S.card, [
       { transform: 'rotateY(-180deg) scale(.97)' },
