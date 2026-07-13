@@ -58,7 +58,7 @@
       radial-gradient(30% 30% at 12% 82%, rgba(138,90,36,.07), transparent 72%);
     animation: bgdrift 46s ease-in-out infinite alternate;
   }
-  #bgcanvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .7; }
+  #bgcanvas { position: absolute; top: 0; left: 0; width: 100%; height: calc(100% + 420px); opacity: .7; will-change: transform; }
   @keyframes bgdrift { from { transform: translate3d(-1.5%, 1%, 0) scale(1); } to { transform: translate3d(2.5%, -1.5%, 0) scale(1.07); } }
   @media (prefers-reduced-motion: reduce) { #bg::before { animation: none; } }
 
@@ -606,13 +606,25 @@
 
   /* ================= game actions ================= */
   var overlayGhost = null; // loss reveal letters
+  function slotHasEmpty(sid) {
+    if (sid === null) return false;
+    var s = G.slots[sid];
+    for (var k = 0; k < s.cells.length; k++) {
+      var c = s.cells[k];
+      if (!day.locked[c] && !day.revealed[c] && !day.pencil[c]) return true;
+    }
+    return false;
+  }
   function typeLetter(ch) {
     if (day.done || sel.cell < 0) return;
     var c = sel.cell;
     if (day.locked[c] || day.revealed[c]) { advance(1); c = sel.cell; if (day.locked[c] || day.revealed[c]) return; }
+    // if the word was already complete, retyping should flow letter-by-letter (NYT-style);
+    // if it still has empties, typing hops to the next empty square
+    var sequential = !slotHasEmpty(selSlotId());
     day.pencil[c] = ch;
     saveDay();
-    advance(1); // renders
+    advance(1, sequential); // renders
     popCell(c);
   }
   function backspace() {
@@ -629,15 +641,16 @@
     var c = sel.cell;
     if (!day.locked[c] && !day.revealed[c] && day.pencil[c]) { day.pencil[c] = ''; saveDay(); render(); }
   }
-  function advance(step) {
+  function advance(step, sequential) {
     var sid = selSlotId();
     if (sid === null) return;
     var s = G.slots[sid], k = s.cells.indexOf(sel.cell), n = k + step;
     while (n >= 0 && n < s.cells.length) {
       var c = s.cells[n];
-      // typing hops over anything already written (locked, revealed, or penciled);
-      // moving backwards never skips, so Backspace still walks cell by cell
-      if (step < 0 || (!day.locked[c] && !day.revealed[c] && !day.pencil[c])) { sel.cell = c; render(); return; }
+      // forward typing hops over anything already written — unless the word was already
+      // complete (sequential), where the cursor walks cell to cell so retyping flows;
+      // settled ink is always skipped, and moving backwards never skips
+      if (step < 0 || (!day.locked[c] && !day.revealed[c] && (sequential || !day.pencil[c]))) { sel.cell = c; render(); return; }
       n += step;
     }
     render();
@@ -1795,15 +1808,16 @@
     var ctx = cv.getContext('2d');
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var dpr = Math.min(window.devicePixelRatio || 1, 2), W = 0, H = 0, marks = [], raf = 0;
+    var PAD = 420; // extra canvas below the fold so scroll parallax has room
     var COLORS = ['29,90,86', '138,90,36']; // viridian, ochre
     function resize() {
-      W = wrap.clientWidth; H = wrap.clientHeight;
+      W = wrap.clientWidth; H = wrap.clientHeight + PAD;
       cv.width = Math.max(1, W * dpr); cv.height = Math.max(1, H * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
     function seed() {
       marks = [];
-      var n = Math.max(9, Math.min(20, Math.round(W * H / 95000)));
+      var n = Math.max(9, Math.min(22, Math.round(W * H / 95000)));
       for (var i = 0; i < n; i++) marks.push({
         x: Math.random() * W, y: Math.random() * H, s: 42 + Math.random() * 88,
         rot: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.0015,
@@ -1833,7 +1847,24 @@
     function run() { cancelAnimationFrame(raf); if (reduce) draw(); else raf = requestAnimationFrame(step); }
     window.__dxcBgPause = function () { cancelAnimationFrame(raf); };
     window.__dxcBgRun = run;
-    var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { resize(); seed(); draw(); }, 150); });
+    // mobile fires resize on URL-bar collapse mid-scroll: only a real WIDTH change
+    // (rotation, window resize) reseeds — otherwise the marks sail on undisturbed
+    var rt;
+    window.addEventListener('resize', function () {
+      clearTimeout(rt);
+      rt = setTimeout(function () {
+        var prevW = W;
+        resize();
+        if (Math.abs(W - prevW) > prevW * 0.12) seed();
+        draw();
+      }, 150);
+    });
+    // gentle parallax: the marks drift upward slightly as the page scrolls
+    if (!reduce) {
+      window.addEventListener('scroll', function () {
+        cv.style.transform = 'translateY(' + (-Math.min(window.scrollY * 0.12, PAD)) + 'px)';
+      }, { passive: true });
+    }
     document.addEventListener('visibilitychange', function () { if (!document.hidden) run(); else cancelAnimationFrame(raf); });
     resize(); seed(); run();
   })();
