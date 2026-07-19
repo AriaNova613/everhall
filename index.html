@@ -1895,6 +1895,29 @@
   }
   selectPair(0, true);
   if (!load('dxc.helped', 0)) { openScrim('helpscrim'); store('dxc.helped', 1); }
+  // ?encore — replay the win show on load for a finished day (screenshots, demo clips).
+  // ?encore=seal builds the sealed-card pose STATICALLY — deterministic for captures.
+  (function () {
+    var m = location.search.match(/encore(?:=([a-z]+))?/);
+    if (!m || !day.done || !day.win) return;
+    if (m[1] === 'seal') {
+      setTimeout(function () {
+        SHOW.running = 1; SHOW.ac = new AbortController();
+        var stage = buildBareStage();
+        boardEl.style.visibility = 'hidden';
+        document.getElementById('endpanel').hidden = true;
+        var cellR = cellEls[24].getBoundingClientRect(); // centre cell — where the packet lands
+        var size = Math.min(2.4 * cellR.width, .6 * window.innerWidth);
+        var flaw = day.strikes === 0 && !day.assisted && day.actions.indexOf('C') < 0;
+        var card = buildSealCard(flaw, size, true);
+        card.style.left = (cellR.left + cellR.width / 2 - size / 2) + 'px';
+        card.style.top = (cellR.top + cellR.height / 2 - size / 2) + 'px';
+        stage.appendChild(card);
+      }, 900);
+      return;
+    }
+    sTmr(function () { winShow({ replay: true }); }, 700);
+  })();
 
   // quiet sanity check: derived slots must fit the pair words
   PAIRS.forEach(function (p) {
