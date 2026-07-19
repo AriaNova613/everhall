@@ -415,7 +415,7 @@
         <div class="cards" id="cards"></div>
       </section>
     </main>
-    <footer class="sitefoot">© 2026 <span class="sf-mark">EVERHALL</span> · Double Cross is an original game · all rights reserved</footer>
+    <footer class="sitefoot">© 2026 <span class="sf-mark">EVERHALL</span> · Double Cross is an original game · all rights reserved · visits counted anonymously, no cookies</footer>
   </div>
 </div>
 
@@ -636,6 +636,7 @@
     // if the word was already complete, retyping should flow letter-by-letter (NYT-style);
     // if it still has empties, typing hops to the next empty square
     var sequential = !slotHasEmpty(selSlotId());
+    if (!day.started) { day.started = 1; track('day-started'); }
     day.pencil[c] = ch;
     saveDay();
     advance(1, sequential); // renders
@@ -790,6 +791,7 @@
     var truth = (s.id === p.s1 ? p.w1 : p.w2)[e.off];
     day.strikes++;
     day.actions.push('C');
+    track('chisel');
     day.revealed[c] = truth; day.pencil[c] = '';
     saveDay(); render();
     popCell(c);
@@ -811,6 +813,7 @@
     day.assisted = 1;
     day.almanacs++;
     day.actions.push('A');
+    track('almanac');
     settlePair(p);
     saveDay(); render();
     popLocked();
@@ -848,6 +851,9 @@
         if (flawless) stats.flawless++;
         if (day.seals.length === 0) stats.firstPress++; // won on the very first press (tools allowed)
         if (day.assisted) stats.assisted++;
+        track('win'); track('win-strikes-' + Math.min(day.strikes, 3));
+        if (flawless) track('flawless');
+        if (day.seals.length === 0) track('first-press');
         stats.histo[Math.min(day.strikes, 3)]++;
         if (stats.lastIdx === day.idx - 1) stats.streak++;
         else if (stats.lastIdx === day.idx - 2 && stats.graceWeek !== weekKey(new Date())) { stats.streak++; stats.graceWeek = weekKey(new Date()); }
@@ -857,6 +863,7 @@
         stats.histo.L++;
         stats.streak = 0;
         day.actions.push('X');
+        track(day.gaveup ? 'gave-up' : 'cracked');
       }
       stats.lastIdx = day.idx;
       store('dxc.stats', stats);
@@ -890,6 +897,7 @@
     return out;
   }
   function doShare() {
+    track('share');
     var txt = shareText();
     if (navigator.share) { navigator.share({ text: txt }).catch(function () {}); return; }
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1783,6 +1791,20 @@
     });
   }
 
+  /* ================= anonymous aggregate counts (GoatCounter: no cookies, no IDs) ================= */
+  function track(name) {
+    try { if (window.goatcounter && goatcounter.count) goatcounter.count({ path: name, title: name, event: true }); } catch (e) {}
+  }
+  // one retention ping per day: streak size in coarse buckets, nothing else
+  (function () {
+    if (day.done || load('dxc.pinged', -1) === dayIdx) return;
+    store('dxc.pinged', dayIdx);
+    if (stats.streak >= 1) {
+      var b = stats.streak >= 10 ? '10plus' : stats.streak >= 5 ? '5-9' : stats.streak >= 2 ? '2-4' : '1';
+      track('streak-' + b);
+    }
+  })();
+
   window.__dxc = { winShow: winShow, finishShow: finishShow, SHOW: SHOW };
 
   document.addEventListener('keydown', function (ev) {
@@ -1927,6 +1949,7 @@
   });
 })();
 </script>
+<script data-goatcounter="https://everhall.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 
 </body>
 </html>
