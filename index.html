@@ -636,7 +636,7 @@
     // if the word was already complete, retyping should flow letter-by-letter (NYT-style);
     // if it still has empties, typing hops to the next empty square
     var sequential = !slotHasEmpty(selSlotId());
-    if (!day.started) { day.started = 1; track('day-started'); }
+    if (!day.started) { day.started = 1; track('play-started'); }
     day.pencil[c] = ch;
     saveDay();
     advance(1, sequential); // renders
@@ -791,7 +791,7 @@
     var truth = (s.id === p.s1 ? p.w1 : p.w2)[e.off];
     day.strikes++;
     day.actions.push('C');
-    track('chisel');
+    track('used-chisel');
     day.revealed[c] = truth; day.pencil[c] = '';
     saveDay(); render();
     popCell(c);
@@ -813,7 +813,7 @@
     day.assisted = 1;
     day.almanacs++;
     day.actions.push('A');
-    track('almanac');
+    track('used-almanac');
     settlePair(p);
     saveDay(); render();
     popLocked();
@@ -851,9 +851,9 @@
         if (flawless) stats.flawless++;
         if (day.seals.length === 0) stats.firstPress++; // won on the very first press (tools allowed)
         if (day.assisted) stats.assisted++;
-        track('win'); track('win-strikes-' + Math.min(day.strikes, 3));
-        if (flawless) track('flawless');
-        if (day.seals.length === 0) track('first-press');
+        track('play-won'); track('play-won-' + Math.min(day.strikes, 3) + '-strikes');
+        if (flawless) track('play-won-flawless');
+        if (day.seals.length === 0) track('play-won-first-press');
         stats.histo[Math.min(day.strikes, 3)]++;
         if (stats.lastIdx === day.idx - 1) stats.streak++;
         else if (stats.lastIdx === day.idx - 2 && stats.graceWeek !== weekKey(new Date())) { stats.streak++; stats.graceWeek = weekKey(new Date()); }
@@ -863,7 +863,7 @@
         stats.histo.L++;
         stats.streak = 0;
         day.actions.push('X');
-        track(day.gaveup ? 'gave-up' : 'cracked');
+        track(day.gaveup ? 'play-gave-up' : 'play-lost');
       }
       stats.lastIdx = day.idx;
       store('dxc.stats', stats);
@@ -897,7 +897,7 @@
     return out;
   }
   function doShare() {
-    track('share');
+    track('shared-result');
     var txt = shareText();
     if (navigator.share) { navigator.share({ text: txt }).catch(function () {}); return; }
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1792,8 +1792,27 @@
   }
 
   /* ================= anonymous aggregate counts (GoatCounter: no cookies, no IDs) ================= */
+  var EVENT_TITLES = {
+    'play-started': '🏁 Started the puzzle',
+    'play-won': '🏆 Won the day',
+    'play-won-0-strikes': '🏆 Won · clean (0 strikes)',
+    'play-won-1-strikes': '🏆 Won · 1 strike',
+    'play-won-2-strikes': '🏆 Won · 2 strikes',
+    'play-won-3-strikes': '🏆 Won · 3 strikes',
+    'play-won-flawless': '✨ Flawless (no strikes, no help)',
+    'play-won-first-press': '🎯 Sealed on the first press',
+    'play-lost': '💥 Lost — four strikes',
+    'play-gave-up': '🏳️ Gave up',
+    'used-chisel': '💡 Used a chisel',
+    'used-almanac': '📖 Used the almanac',
+    'shared-result': '📣 Shared their result',
+    'returned-streak-1': '🔥 Came back — day-1 streak',
+    'returned-streak-2-4': '🔥 Came back — 2-4 day streak',
+    'returned-streak-5-9': '🔥 Came back — 5-9 day streak',
+    'returned-streak-10plus': '🔥 Came back — 10+ day streak',
+  };
   function track(name) {
-    try { if (window.goatcounter && goatcounter.count) goatcounter.count({ path: name, title: name, event: true }); } catch (e) {}
+    try { if (window.goatcounter && goatcounter.count) goatcounter.count({ path: name, title: EVENT_TITLES[name] || name, event: true }); } catch (e) {}
   }
   // one retention ping per day: streak size in coarse buckets, nothing else
   (function () {
@@ -1801,7 +1820,7 @@
     store('dxc.pinged', dayIdx);
     if (stats.streak >= 1) {
       var b = stats.streak >= 10 ? '10plus' : stats.streak >= 5 ? '5-9' : stats.streak >= 2 ? '2-4' : '1';
-      track('streak-' + b);
+      track('returned-streak-' + b);
     }
   })();
 
