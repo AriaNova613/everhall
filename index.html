@@ -132,9 +132,17 @@
   @media (prefers-reduced-motion: reduce) { .cell.pop .ltr, .board.shake { animation: none; } }
 
   /* ---------- lamps + actions ---------- */
-  .lamps { display: flex; align-items: center; gap: 10px; font-size: 12px; letter-spacing: .18em; color: var(--ink-soft); font-weight: 600; }
+  .lamps { display: flex; align-items: center; gap: 10px; font-size: 12px; letter-spacing: .18em; color: var(--ink-soft); font-weight: 600; width: 100%; max-width: calc(7 * var(--cell) + 20px); }
   .lamp { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--ink-soft); background: var(--paper-hi); transition: background .25s, border-color .25s; }
   .lamp.lit { background: var(--miss); border-color: var(--miss); }
+  .clockchip {
+    margin-left: auto; border: none; background: none; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--sans); font-weight: 600; font-size: 13px; letter-spacing: .04em;
+    color: var(--ink-soft); padding: 2px 6px; border-radius: 7px; font-variant-numeric: tabular-nums;
+  }
+  .clockchip:hover { color: var(--ink); }
+  .clockchip.off { opacity: .45; }
   .actionbar { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: calc(7 * var(--cell) + 20px); }
   .lockrow { display: flex; gap: 8px; }
   button.btn {
@@ -314,6 +322,7 @@
   .endpanel { margin-top: 14px; border: 2px solid var(--ink); border-radius: 12px; background: var(--paper-hi); padding: 16px 18px; max-width: calc(7 * var(--cell) + 20px); width: 100%; }
   .endpanel h3 { font-family: var(--display); font-weight: 600; margin: 0 0 4px; font-size: 24px; }
   .endpanel .verdict { font-size: 14px; color: var(--ink-soft); margin-bottom: 12px; }
+  .endpanel .clockline { font-size: 13.5px; color: var(--ink-soft); margin: -6px 0 12px; font-variant-numeric: tabular-nums; }
   .endpanel .rowbtns { display: flex; gap: 8px; flex-wrap: wrap; }
   .countdown { font-size: 13px; color: var(--ink-soft); margin-top: 10px; font-variant-numeric: tabular-nums; }
 
@@ -384,6 +393,7 @@
       <section class="boardcol">
         <div class="lamps" aria-label="Strikes">STRIKES
           <span class="lamp" id="lamp0"></span><span class="lamp" id="lamp1"></span><span class="lamp" id="lamp2"></span><span class="lamp" id="lamp3"></span>
+          <button class="clockchip" id="clockchip">⏱<span id="clocktime">0:00</span></button>
         </div>
         <div class="board" id="board" role="grid" tabindex="0" aria-label="Crossword board — arrow keys move, type to fill, Enter to lock the selected pair"></div>
         <div class="cluebar" id="cluebar" hidden>
@@ -554,7 +564,7 @@
       revealed: new Array(N * N).fill(''),       // chisel / starter truth
       lockedPairs: PAIRS.map(function () { return false; }), // v2 meaning: settled pairs
       coach: [],
-      seals: [], marks: [], almanacs: 0,
+      seals: [], marks: [], almanacs: 0, ms: 0,
       strikes: 0, actions: [], done: 0, win: 0, assisted: 0, gaveup: 0, counted: 0
     };
     if (STARTER) d.revealed[STARTER.cell] = STARTER.ch;
@@ -572,7 +582,7 @@
   var migrated = false;
   if (day && day.idx === dayIdx && day.v === 1) { day = migrateV1(day); migrated = true; }
   if (!day || day.idx !== dayIdx || day.v !== 2) day = freshDay();
-  function saveDay() { store('dxc.day', day); }
+  function saveDay() { foldClock(); store('dxc.day', day); }
   if (migrated) saveDay(); // persist the migration immediately, not on the next keystroke
 
   /* ================= selection ================= */
@@ -635,12 +645,40 @@
     if (day.locked[c] || day.revealed[c]) { advance(1); c = sel.cell; if (day.locked[c] || day.revealed[c]) return; }
     // if the word was already complete, retyping should flow letter-by-letter (NYT-style);
     // if it still has empties, typing hops to the next empty square
-    var sequential = !slotHasEmpty(selSlotId());
-    if (!day.started) { day.started = 1; track('play-started'); }
+    var sid = selSlotId();
+    var sequential = !slotHasEmpty(sid);
+    if (!day.started) { day.started = 1; startClock(); track('play-started'); }
     day.pencil[c] = ch;
     saveDay();
-    advance(1, sequential); // renders
+    // entering a word's last letter moves on to the next clue — its twin home first;
+    // mid-word overtyping (sequential, not at the end) keeps walking cell to cell
+    var cells = G.slots[sid].cells;
+    if (!slotHasEmpty(sid) && (!sequential || c === cells[cells.length - 1])) nextClue(sid); // renders
+    else advance(1, sequential); // renders
     popCell(c);
+  }
+  function firstEmptyCellIn(sid) {
+    var s = G.slots[sid];
+    for (var k = 0; k < s.cells.length; k++) {
+      var c = s.cells[k];
+      if (!day.locked[c] && !day.revealed[c] && !day.pencil[c]) return c;
+    }
+    return -1;
+  }
+  function jumpToSlot(sid) {
+    var c = firstEmptyCellIn(sid);
+    if (c < 0) return false;
+    sel.dir = G.slots[sid].dir; sel.cell = c;
+    render();
+    return true;
+  }
+  function nextClue(fromSid) {
+    var p = PAIRS[pairOfSlot[fromSid]];
+    if (jumpToSlot(fromSid === p.s1 ? p.s2 : p.s1)) return;
+    for (var k = 1; k < G.slots.length; k++) {
+      if (jumpToSlot((fromSid + k) % G.slots.length)) return;
+    }
+    render(); // every square is filled — stay put for the seal
   }
   function backspace() {
     if (day.done || sel.cell < 0) return;
@@ -880,6 +918,43 @@
     if (win) sTmr(function () { winShow({}); }, 380); // let the final green pops land first
   }
 
+  /* ================= the solve clock =================
+     Active time only: runs from the first penciled letter, pauses while the tab
+     is hidden, stops at the seal. Banked into day.ms by every saveDay(), so an
+     old save without the field simply starts from zero. */
+  var clockAnchor = null; // wall-clock ms when the running span began; null = paused
+  function startClock() { if (!clockAnchor && day.started && !day.done) clockAnchor = Date.now(); }
+  function foldClock() {
+    if (!clockAnchor) return;
+    day.ms = (day.ms || 0) + Math.max(0, Date.now() - clockAnchor);
+    clockAnchor = day.done ? null : Date.now();
+  }
+  function clockMs() { return (day.ms || 0) + (clockAnchor ? Math.max(0, Date.now() - clockAnchor) : 0); }
+  function fmtClock(ms) {
+    var t = Math.floor(ms / 1000), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60;
+    return (h ? h + ':' + (m < 10 ? '0' : '') : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+  var clockShown = load('dxc.clock', 1) !== 0;
+  var clockChipEl = document.getElementById('clockchip'), clockTimeEl = document.getElementById('clocktime');
+  function renderClock() { clockTimeEl.textContent = clockShown ? fmtClock(clockMs()) : ''; }
+  function applyClockPref() {
+    clockChipEl.classList.toggle('off', !clockShown);
+    clockChipEl.title = clockShown ? 'Hide the timer' : 'Show the timer';
+    clockChipEl.setAttribute('aria-label', clockShown ? 'Timer — tap to hide' : 'Timer hidden — tap to show');
+    renderClock();
+  }
+  clockChipEl.addEventListener('click', function () {
+    clockShown = !clockShown; store('dxc.clock', clockShown ? 1 : 0); applyClockPref();
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) { foldClock(); clockAnchor = null; store('dxc.day', day); }
+    else { startClock(); renderClock(); }
+  });
+  window.addEventListener('pagehide', function () { foldClock(); clockAnchor = null; store('dxc.day', day); });
+  setInterval(renderClock, 1000);
+  applyClockPref();
+  startClock(); // resume mid-solve after a reload
+
   /* ================= share & coach ================= */
   var EMOJI = { L: '🟩', S: '🟨', M: '🟥', C: '💡', A: '📖', X: '⬛' };
   function shareText() {
@@ -889,6 +964,7 @@
       : (day.gaveup ? '🏳 set down' : 'cracked'));
     var line = day.actions.map(function (a) { return EMOJI[a] || ''; }).join('');
     var extras = [];
+    if (day.win && day.ms) extras.push('⏱ ' + fmtClock(day.ms));
     if (stats.streak >= 2) extras.push('🔥 ' + stats.streak);
     if (day.win && day.strikes === 0 && !day.assisted && day.actions.indexOf('C') < 0) extras.push('✦ Flawless');
     var out = head + '\n' + line;
@@ -1110,6 +1186,7 @@
     giveupbtn.textContent = giveupArmed ? '🏳 Tap again to confirm — reveal the answers' : '🏳 Give up & reveal the answers';
     // streak chip
     document.getElementById('streakchip').textContent = '🔥 ' + stats.streak;
+    renderClock();
     // end panel
     renderEnd();
   }
@@ -1130,6 +1207,7 @@
         : day.assisted ? 'The almanac keeps its secrets between you two.'
         : firstPress ? 'The very first press held. Not one wasted lamp on seals.'
         : msgs[Math.min(day.strikes, 3)]) + '</div>';
+      if (day.ms) h += '<div class="clockline">⏱ Solved in ' + fmtClock(day.ms) + '</div>';
     } else if (day.gaveup) {
       h += '<h3>Set down for today.</h3><div class="verdict">You waved the flag — the full solution is inked in above. Fresh grid tomorrow.</div>';
     } else {
@@ -1824,7 +1902,7 @@
     }
   })();
 
-  window.__dxc = { winShow: winShow, finishShow: finishShow, SHOW: SHOW };
+  window.__dxc = { winShow: winShow, finishShow: finishShow, SHOW: SHOW, shareText: shareText };
 
   document.addEventListener('keydown', function (ev) {
     if (SHOW.running) { finishShow(); ev.preventDefault(); return; }
