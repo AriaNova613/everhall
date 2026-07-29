@@ -348,14 +348,6 @@
   .histo .hlab { width: 64px; color: var(--ink-soft); text-align: right; }
   .histo .hbar { height: 15px; background: var(--accent); border-radius: 3px; min-width: 2px; }
   .histo .hrow.lossrow .hbar { background: var(--miss); }
-  .coachlist { margin: 10px 0 0; padding: 0; list-style: none; }
-  .coachlist li { display: flex; gap: 9px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--paper-dim); font-size: 14.5px; font-variant-numeric: tabular-nums; }
-  .coachlist .cbadge { font-size: 11.5px; font-weight: 700; border-radius: 6px; padding: 2px 7px; white-space: nowrap; }
-  .cbadge.anch { background: var(--paper-dim); color: var(--ink-soft); }
-  .cbadge.cold { background: var(--good-wash); color: var(--good); }
-  .cbadge.swpf { background: var(--swap-wash); color: #8a5c10; }
-  .cbadge.alma { background: var(--accent-wash); color: var(--accent); }
-  .toehold { margin-top: 12px; font-size: 14px; background: var(--paper-hi); border: 1.5px dashed var(--ink-faint); border-radius: 8px; padding: 9px 12px; }
 
   /* ---------- toast ---------- */
   #toast {
@@ -461,14 +453,6 @@
   </div>
 </div>
 
-<div class="scrim" id="coachscrim" role="dialog" aria-modal="true" aria-label="How today unfolded">
-  <div class="modal">
-    <button class="mclose" data-close="coachscrim" aria-label="Close">×</button>
-    <h2>How today unfolded</h2>
-    <div id="coachbody"></div>
-  </div>
-</div>
-
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -563,7 +547,6 @@
       locked: new Array(N * N).fill(''),         // trusted ink (almanac-settled / v1 migration)
       revealed: new Array(N * N).fill(''),       // chisel / starter truth
       lockedPairs: PAIRS.map(function () { return false; }), // v2 meaning: settled pairs
-      coach: [],
       seals: [], marks: [], almanacs: 0, ms: 0,
       strikes: 0, actions: [], done: 0, win: 0, assisted: 0, gaveup: 0, counted: 0
     };
@@ -575,7 +558,6 @@
     d.v = 2;
     d.seals = []; d.marks = []; d.almanacs = 0;
     delete d.swapKnown; delete d.badges;
-    if (!d.coach) d.coach = [];
     return d;
   }
   var day = load('dxc.day', null);
@@ -955,7 +937,7 @@
   applyClockPref();
   startClock(); // resume mid-solve after a reload
 
-  /* ================= share & coach ================= */
+  /* ================= share ================= */
   var EMOJI = { L: '🟩', S: '🟨', M: '🟥', C: '💡', A: '📖', X: '⬛' };
   function shareText() {
     var n = (dayIdx % bank.length) + 1;
@@ -986,58 +968,6 @@
     document.body.appendChild(ta); ta.select();
     try { document.execCommand('copy'); toast('Copied to clipboard'); } catch (e) { toast('Could not copy — long-press to select'); }
     document.body.removeChild(ta);
-  }
-
-  function toeholdPair() {
-    // omniscient depth-0: a pair whose WRONG orientation clashes with a neighbour either way round
-    for (var i = 0; i < PAIRS.length; i++) {
-      var p = PAIRS[i];
-      if (STARTER) {
-        var A0 = G.slots[p.s1].cells.indexOf(STARTER.cell), B0 = G.slots[p.s2].cells.indexOf(STARTER.cell);
-        if ((A0 >= 0 && p.w2[A0] !== STARTER.ch) || (B0 >= 0 && p.w1[B0] !== STARTER.ch)) return { p: p, via: 'the starter letter' };
-      }
-      for (var j = 0; j < PAIRS.length; j++) {
-        if (i === j) continue;
-        var q = PAIRS[j], clash0 = false, clash1 = false;
-        [[p.s1, p.w2], [p.s2, p.w1]].forEach(function (side) {
-          var cells = G.slots[side[0]].cells;
-          for (var k = 0; k < cells.length; k++) {
-            [[q.s1, q.w1, q.w2], [q.s2, q.w2, q.w1]].forEach(function (qside) {
-              var kk = G.slots[qside[0]].cells.indexOf(cells[k]);
-              if (kk < 0) return;
-              if (side[1][k] !== qside[1][kk]) clash0 = true;
-              if (side[1][k] !== qside[2][kk]) clash1 = true;
-            });
-          }
-        });
-        if (clash0 && clash1) return { p: p, via: pairLabel(q) };
-      }
-    }
-    return null;
-  }
-  function coachHtml() {
-    var h = '';
-    if (day.seals.length) {
-      h += '<ol class="coachlist">';
-      day.seals.forEach(function (s, i) {
-        // name one honest stray from that attempt's snapshot, so a hard day ends in understanding
-        var stray = '';
-        for (var sid = 0; sid < G.slots.length && !stray; sid++) {
-          var sl = G.slots[sid], word = '';
-          for (var k = 0; k < sl.cells.length; k++) { var ch = s.snap[sl.cells[k]]; word += (ch === '?' ? '' : ch); }
-          if (word.length !== sl.len) continue;
-          var pp = PAIRS[pairOfSlot[sid]];
-          if (word !== pp.w1 && word !== pp.w2) stray = word.toUpperCase() + ' at ' + slotLabel(sid) + ' wasn’t one of its clue’s answers';
-        }
-        h += '<li><span class="cbadge swpf">Seal ' + (i + 1) + '</span><span>' + s.home + ' of ' + PAIRS.length + ' pairs home' + (stray ? ' — ' + stray : '') + '</span></li>';
-      });
-      h += '</ol>';
-    } else if (day.win) {
-      h += '<div class="toehold">✦ Sealed on the very first press — the grid never had a chance.</div>';
-    }
-    var th = toeholdPair();
-    if (th) h += '<div class="toehold">🧭 <b>Today’s toehold:</b> ' + pairLabel(th.p) + ' — its wrong arrangement clashes with ' + th.via + ' no matter which way round that goes.</div>';
-    return h;
   }
 
   /* ================= rendering ================= */
@@ -1213,13 +1143,12 @@
     } else {
       h += '<h3>Cracked.</h3><div class="verdict">The grid got you today — it happens to the best. The full solution is inked in above.</div>';
     }
-    h += '<div class="rowbtns"><button class="btn primary" id="sharebtn2">Share</button><button class="btn" id="coachbtn">How it unfolded</button><button class="btn" id="statsbtn2">Stats</button>'
+    h += '<div class="rowbtns"><button class="btn primary" id="sharebtn2">Share</button><button class="btn" id="statsbtn2">Stats</button>'
       + (day.win ? '<button class="btn" id="replaybtn" title="Watch the fold again">↻ Watch again</button>' : '') + '</div>';
     h += '<div class="countdown" id="countdown"></div>';
     ep.innerHTML = h;
     if (day.win) document.getElementById('replaybtn').addEventListener('click', function () { winShow({ replay: true }); });
     document.getElementById('sharebtn2').addEventListener('click', doShare);
-    document.getElementById('coachbtn').addEventListener('click', function () { document.getElementById('coachbody').innerHTML = coachHtml(); openScrim('coachscrim'); });
     document.getElementById('statsbtn2').addEventListener('click', showStats);
     tickCountdown();
   }
@@ -1280,7 +1209,7 @@
 
   /* ================= modals ================= */
   function openScrim(id) { document.getElementById(id).classList.add('open'); }
-  function closeScrims() { ['helpscrim', 'statsscrim', 'coachscrim'].forEach(function (id) { document.getElementById(id).classList.remove('open'); }); }
+  function closeScrims() { ['helpscrim', 'statsscrim'].forEach(function (id) { document.getElementById(id).classList.remove('open'); }); }
   document.querySelectorAll('.mclose').forEach(function (b) { b.addEventListener('click', closeScrims); });
   document.querySelectorAll('.scrim').forEach(function (s) { s.addEventListener('pointerdown', function (ev) { if (ev.target === s) closeScrims(); }); });
   document.getElementById('helpbtn').addEventListener('click', function () { openScrim('helpscrim'); });
