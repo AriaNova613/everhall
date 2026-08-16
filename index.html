@@ -182,7 +182,6 @@
   .cell.markStale.markA.markD { box-shadow: inset 0 -3px 0 -1px rgba(179,64,46,.28), inset -3px 0 0 -1px rgba(179,64,46,.28); }
   .cell.sel.markA, .cell.sel.markD, .cell.sel.markA.markD { box-shadow: inset 0 0 0 3px var(--accent); } /* cursor outranks marks */
   .sealbtn { border-color: var(--gold, #a8842c); }
-  .sealbtn.armed { background: var(--gold, #a8842c); border-color: var(--gold, #a8842c); }
   .sealbtn.lastseal { background: var(--miss); border-color: var(--miss); }
   .ledger {
     margin: 8px 0 0; padding: 8px 12px; border-radius: 10px;
@@ -587,7 +586,6 @@
     sel.cell = cell;
     almanacPending = -1;  // any reselection cancels a pending almanac confirmation
     giveupArmed = false;
-    disarmSeal();
     render();
   }
   function selectPair(pi, preferEmpty) {
@@ -597,7 +595,6 @@
     sel.cell = preferEmpty ? firstEditableCell(p.s1) : s.cells[0];
     if (pi !== almanacPending) almanacPending = -1;
     giveupArmed = false;
-    disarmSeal();
     render();
   }
 
@@ -747,9 +744,9 @@
   }
   function pairHome(p) { return slotTruth(p.s1) && slotTruth(p.s2); }
 
-  var sealArmed = false, sealArmTimer = 0;
-  function disarmSeal() { sealArmed = false; clearTimeout(sealArmTimer); }
   function seal() {
+    // one press judges the grid — no confirmation step. The duplicate-snapshot
+    // block above the judgment keeps an accidental double-press from double-striking.
     if (day.done) return;
     if (!gridFull()) { toast('Fill every square to seal.'); return; }
     var snap = snapshot();
@@ -757,14 +754,6 @@
       toast('You’ve sealed this exact arrangement before.');
       return;
     }
-    if (!sealArmed) {
-      sealArmed = true;
-      render();
-      clearTimeout(sealArmTimer);
-      sealArmTimer = setTimeout(function () { sealArmed = false; render(); }, 5000);
-      return;
-    }
-    disarmSeal();
     var home = PAIRS.filter(pairHome).length;
     if (home === PAIRS.length) {
       day.actions.push('L');
@@ -1093,7 +1082,7 @@
     var lockbtn = document.getElementById('lockbtn'), locklabel = document.getElementById('locklabel');
     var swapbtn = document.getElementById('swapbtn');
     var chiselbtn = document.getElementById('chiselbtn'), almanacbtn = document.getElementById('almanacbtn');
-    lockbtn.classList.remove('armed', 'lastseal');
+    lockbtn.classList.remove('lastseal');
     if (day.done) {
       lockbtn.disabled = swapbtn.disabled = chiselbtn.disabled = almanacbtn.disabled = true;
       locklabel.textContent = day.win ? 'Sealed' : 'Cracked';
@@ -1102,7 +1091,6 @@
       for (var ci = 0; ci < N * N; ci++) if (!G.bl[ci] && !letterAt(ci)) empty++;
       lockbtn.disabled = empty > 0;
       if (empty > 0) locklabel.textContent = 'Seal the grid — ' + empty + (empty === 1 ? ' square' : ' squares') + ' to go';
-      else if (sealArmed) { locklabel.textContent = 'Press again to seal'; lockbtn.classList.add('armed'); }
       else if (day.strikes === 3) { locklabel.textContent = 'LAST SEAL'; lockbtn.classList.add('lastseal'); }
       else locklabel.textContent = 'Seal the grid';
       swapbtn.disabled = !p || !!day.lockedPairs[p.i];
