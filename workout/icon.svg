@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Checkmark">
+  <rect width="512" height="512" rx="112" fill="#15803d"/>
+  <path d="M139 267 L212 341 L373 175"
+        fill="none" stroke="#ffffff" stroke-width="58"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
