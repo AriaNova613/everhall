@@ -80,6 +80,7 @@ const state = {
   me: null,            // my profile row
   profiles: [],        // every member profile, me first
   checkins: new Map(), // "userId|YYYY-MM-DD" -> row
+  pending: [],         // allow-listed people who haven't signed in yet
   cursor: null,        // {y, m} month being displayed
   channel: null,
 };
@@ -313,10 +314,9 @@ async function enterApp(session) {
       <button class="btn" onclick="location.reload()">Back to sign in</button>`);
   }
 
-  state.me = mine;
-  state.profiles = [mine, ...profiles.filter(p => p.id !== mine.id)
-    .sort((a, b) => (a.display_name || '').localeCompare(b.display_name || ''))];
+  setProfiles(mine, profiles);
 
+  await loadMembers();
   await loadCheckins();
 
   const now = new Date();
@@ -329,6 +329,22 @@ async function enterApp(session) {
   wireChrome();
   subscribeRealtime();
   renderAll();
+}
+
+// Me first, then everyone else alphabetically.
+function setProfiles(mine, profiles) {
+  state.me = mine;
+  state.profiles = [mine, ...profiles.filter(p => p.id !== mine.id)
+    .sort((a, b) => (a.display_name || '').localeCompare(b.display_name || ''))];
+}
+
+// Allow-listed people who have not signed in yet have no profile row, so they
+// would otherwise be invisible. Show them as an empty board instead — on day
+// one that is the difference between "we built this together" and a lone card.
+async function loadMembers() {
+  const { data } = await state.supa.from('members').select('email, display_name, color');
+  const known = new Set(state.profiles.map(p => p.email));
+  state.pending = (data || []).filter(m => !known.has(m.email));
 }
 
 async function loadCheckins() {
@@ -371,9 +387,8 @@ function subscribeRealtime() {
       const { data } = await state.supa.from('profiles').select('*');
       if (data?.length) {
         const mine = data.find(p => p.id === state.me.id) || state.me;
-        state.me = mine;
-        state.profiles = [mine, ...data.filter(p => p.id !== mine.id)
-          .sort((a, b) => (a.display_name || '').localeCompare(b.display_name || ''))];
+        setProfiles(mine, data);
+        await loadMembers();
         renderAll();
       }
     })
@@ -484,7 +499,9 @@ function renderMonth() {
   const now = new Date();
   $('#nextM').disabled = (y === now.getFullYear() && m === now.getMonth());
 
-  $('#boards').innerHTML = state.profiles.map(p => board(p, y, m)).join('');
+  $('#boards').innerHTML =
+    state.profiles.map(p => board(p, y, m)).join('') +
+    state.pending.map(pendingBoard).join('');
 
   // wire every editable / viewable cell
   $('#boards').querySelectorAll('[data-uid][data-day]').forEach(el => {
@@ -496,6 +513,22 @@ function renderMonth() {
   $('#boards').querySelectorAll('[data-editrule]').forEach(el => {
     el.onclick = openProfileEditor;
   });
+}
+
+function pendingBoard(m) {
+  return `
+    <div class="board card board--pending">
+      <div class="board__head">
+        <div class="board__av" style="background:${colorVar(m.color)};opacity:.45">${esc((m.display_name || '?').slice(0, 2).toUpperCase())}</div>
+        <div class="board__id">
+          <div class="board__name">${esc(m.display_name)}</div>
+          <div class="board__sub">${esc(m.email)}</div>
+        </div>
+      </div>
+      <div class="pending__note">
+        Hasn't signed in yet. Their board appears here the moment they do.
+      </div>
+    </div>`;
 }
 
 function board(p, y, m) {
@@ -720,7 +753,7 @@ async function saveDay(iso, checked, tags, note) {
   else state.checkins.delete(k);
   closeSheet();
   renderAll();
-  if (checked && !prev) celebrate();
+  if (checked && !prev && iso === todayISO()) celebrate();
 
   let error;
   if (checked) {
