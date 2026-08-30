@@ -588,7 +588,7 @@ function renderWeek() {
           <span>${esc(p.display_name)}</span>
         </div>
         <div class="weekdays">${cells}</div>
-        <div class="weekrow__count" title="Weekly target">${done}<span>/${p.weekly_target}</span></div>
+        <div class="weekrow__count" title="Days checked off this week">${done}<span>/7</span></div>
       </div>`;
   }).join('');
 
@@ -942,27 +942,11 @@ function openProfileEditor() {
         placeholder="e.g. 30 minutes of real effort, or a full lifting session. Walking the dog doesn't count.">${esc(p.rule)}</textarea>
     </div>
 
-    <div class="taggroup">
-      <p class="eyebrow">Weekly target</p>
-      <div class="tags" id="targetRow">
-        ${[1,2,3,4,5,6,7].map(n =>
-          `<button class="tag ${n === p.weekly_target ? 'on' : ''}" data-target="${n}">${n}×</button>`).join('')}
-      </div>
-    </div>
-
     <div class="sheet__actions">
       <button class="btn" id="pSave">Save</button>
     </div>`);
 
-  let target = p.weekly_target;
   $('#closeX').onclick = closeSheet;
-  $('#targetRow').querySelectorAll('[data-target]').forEach(b => {
-    b.onclick = () => {
-      target = Number(b.dataset.target);
-      $('#targetRow').querySelectorAll('[data-target]').forEach(x =>
-        x.classList.toggle('on', Number(x.dataset.target) === target));
-    };
-  });
 
   $('#pSave').onclick = async () => {
     const btn = $('#pSave');
@@ -970,7 +954,6 @@ function openProfileEditor() {
     const patch = {
       display_name: ($('#pName').value || '').trim().slice(0, 40) || p.email.split('@')[0],
       rule: ($('#pRule').value || '').trim().slice(0, 400),
-      weekly_target: target,
     };
     const { data, error } = await state.supa.from('profiles')
       .update(patch).eq('id', p.id).select().single();

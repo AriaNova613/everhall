@@ -258,7 +258,9 @@ h1,h2,h3{margin:0;line-height:1.2}
 main{padding:22px 0 60px}
 section{margin-bottom:30px}
 
-.today{padding:20px;display:grid;gap:16px}
+/* Renamed from .today: that collided with the .today STATE class on day
+   tiles, which then inherited this padding and burst out of its grid track. */
+.todaycard{padding:20px;display:grid;gap:16px}
 .today__head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .today__date{font-size:19px;font-weight:750;letter-spacing:-.02em}
 .today__rel{font-size:13px;color:var(--ink-3)}
@@ -776,7 +778,7 @@ body[class*="bg-"]::after{
 
     <section id="todaySec">
       <p class="eyebrow">Today</p>
-      <div class="today card" id="todayCard"></div>
+      <div class="todaycard card" id="todayCard"></div>
     </section>
 
     <section id="weekSec">
