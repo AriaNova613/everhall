@@ -290,6 +290,47 @@ section{margin-bottom:30px}
 }
 .bigcheck.done svg{width:46px;height:46px}
 .bigcheck.done .bigcheck__lbl{font-size:20px;text-transform:uppercase;letter-spacing:.04em}
+/* ---------------------------------------------------------------------------
+   The invitation. Only while the day is UNLOGGED — once it is checked off all
+   of this switches itself off, which is what stops it becoming wallpaper.
+   --------------------------------------------------------------------------- */
+.bigcheck:not(.done){
+  border-color:color-mix(in srgb, var(--good) 42%, var(--line-2));
+  color:var(--ink);
+  background:
+    radial-gradient(125% 95% at 50% 0%, color-mix(in srgb,var(--good) 10%, transparent), transparent 68%),
+    linear-gradient(180deg, color-mix(in srgb,var(--ink) 7%, var(--card)), var(--card));
+  box-shadow:
+    0 4px 0 var(--line-2),
+    0 12px 22px -10px rgba(0,0,0,.55),
+    0 0 28px -8px color-mix(in srgb,var(--good) 34%, transparent),
+    inset 0 1px 0 rgba(255,255,255,.10);
+}
+.bigcheck:not(.done) svg{color:var(--good);animation:nudge 3.4s ease-in-out infinite}
+.bigcheck:not(.done) .bigcheck__lbl{color:var(--good)}
+
+/* A slow ring that swells out of the edge and fades. 3.4s and low opacity:
+   it reads in peripheral vision without demanding you look at it. */
+.bigcheck:not(.done)::before{
+  content:"";position:absolute;inset:-2px;border-radius:inherit;
+  border:2px solid var(--good);pointer-events:none;
+  opacity:0;animation:invite 3.4s ease-in-out infinite;
+}
+@keyframes invite{
+  0%   {opacity:0;   transform:scale(1)}
+  32%  {opacity:.32; transform:scale(1)}
+  100% {opacity:0;   transform:scale(1.04)}
+}
+@keyframes nudge{
+  0%,100%{transform:scale(1)}
+  32%    {transform:scale(1.1)}
+}
+/* Reduced motion keeps the invitation, just holds it still. */
+@media (prefers-reduced-motion:reduce){
+  .bigcheck:not(.done)::before{animation:none;opacity:.28}
+  .bigcheck:not(.done) svg{animation:none}
+}
+
 .bigcheck__hint{font-size:12px;font-weight:500;color:var(--ink-3)}
 
 /* You, stated plainly above your own button. */
@@ -600,57 +641,6 @@ body::before{
 
 /* App bar: a machined edge under it. */
 .appbar{border-bottom-width:2px}
-
-/* ===========================================================================
-   Skin picker
-   =========================================================================== */
-.skins{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-@media (min-width:520px){ .skins{grid-template-columns:repeat(3,minmax(0,1fr))} }
-.skin{
-  padding:0;border:2px solid var(--line-2);border-radius:var(--r-md);
-  overflow:hidden;text-align:left;display:block;width:100%;
-  transition:border-color .15s, transform .08s;
-}
-.skin:hover{border-color:var(--ink-3)}
-.skin:active{transform:scale(.98)}
-.skin.on{border-color:var(--good)}
-.skin__swatch{height:44px;display:flex;align-items:center;gap:6px;padding:0 11px}
-.skin__chip{width:15px;height:15px;border-radius:2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
-.skin__tick{margin-left:auto;width:15px;height:15px;opacity:0}
-.skin.on .skin__tick{opacity:1}
-.skin__name{
-  padding:7px 11px 10px;font-size:12px;font-weight:700;
-  text-transform:uppercase;letter-spacing:.11em;
-  border-top:1px solid currentColor;
-}
-.skin__note{display:block;font-size:10.5px;font-weight:500;letter-spacing:.04em;text-transform:none;opacity:.62;margin-top:1px}
-
-
-/* ===========================================================================
-   ARTWORK — real drawn graphics (web/art/*.svg), not gradients.
-
-   Each is applied as a CSS *mask* over a flat fill, so the artwork takes the
-   palette's own colour instead of shipping one recoloured copy per palette.
-   The layer sits at z-index:-1, behind the content but above the page colour,
-   which is why --paper lives on <html> above.
-   =========================================================================== */
-:root{ --art-ink:color-mix(in srgb, var(--ink) 7%, transparent); }
-
-body[class*="bg-"]::after{
-  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
-  background-color:var(--art-ink);
-  -webkit-mask-image:var(--art);          mask-image:var(--art);
-  -webkit-mask-size:var(--art-size);      mask-size:var(--art-size);
-  -webkit-mask-repeat:repeat;             mask-repeat:repeat;
-}
-
-.bg-iron    { --art:url("art/iron.svg");    --art-size:220px 220px; --art-sm:88px 88px; }
-.bg-chains  { --art:url("art/chains.svg");  --art-size:120px 160px; --art-sm:42px 56px;   }
-.bg-claw    { --art:url("art/claw.svg");    --art-size:260px 260px; --art-sm:62px 62px; }
-.bg-skull   { --art:url("art/skull.svg");   --art-size:240px 240px; --art-sm:50px 50px; }
-.bg-splatter{ --art:url("art/grunge.svg");  --art-size:320px 320px; --art-sm:120px 120px; }
-.bg-scratch { --art:url("art/scratch.svg"); --art-size:300px 300px; --art-sm:120px 120px; }
-.bg-flames  { --art:url("art/flames.svg");  --art-size:200px 200px; --art-sm:54px 54px; }
 
 /* ===========================================================================
    Skin picker
