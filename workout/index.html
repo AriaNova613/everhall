@@ -141,7 +141,7 @@
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{
-  margin:0; background:var(--paper); color:var(--ink);
+  margin:0; background-color:var(--paper); color:var(--ink);
   font-family:var(--font); font-size:16px; line-height:1.5;
   -webkit-font-smoothing:antialiased;
   padding-bottom:env(safe-area-inset-bottom);
@@ -158,7 +158,7 @@ h1,h2,h3{margin:0;line-height:1.2}
   color:var(--ink-3);margin:0 0 10px;
 }
 .card{
-  background:var(--card);border:1px solid var(--line);
+  background:color-mix(in srgb, var(--card) 91%, transparent);border:1px solid var(--line);
   border-radius:var(--r-lg);box-shadow:var(--shadow);
 }
 
@@ -563,6 +563,89 @@ body::before{
   border-top:1px solid currentColor;
 }
 .skin__note{display:block;font-size:10.5px;font-weight:500;letter-spacing:.04em;text-transform:none;opacity:.62;margin-top:1px}
+
+
+/* ===========================================================================
+   TEXTURES — a second axis, independent of palette. Pure CSS: no images, so
+   any texture combines with any palette and nothing extra is downloaded.
+   --tex is derived from --ink, so a texture re-tints itself per palette.
+   =========================================================================== */
+:root{ --tex:color-mix(in srgb, var(--ink) 7%, transparent); }
+
+body[class*="bg-"]{ background-repeat:repeat; }
+
+/* Steel tread plate */
+.bg-plate{
+  background-image:
+    repeating-linear-gradient(45deg,  var(--tex) 0 2px, transparent 2px 15px),
+    repeating-linear-gradient(-45deg, var(--tex) 0 2px, transparent 2px 15px);
+  background-size:30px 30px;
+}
+/* Brushed steel */
+.bg-brushed{
+  background-image:repeating-linear-gradient(90deg, var(--tex) 0 1px, transparent 1px 4px);
+  background-size:auto;
+}
+/* Poured concrete — fine tooth, not clouds. stitchTiles removes the seam. */
+.bg-concrete{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.55 0 0 0 0 0.55 0 0 0 0.13 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23c)'/%3E%3C/svg%3E");
+  background-size:220px 220px;
+}
+
+/* Hazard tape */
+.bg-hazard{
+  background-image:repeating-linear-gradient(45deg, var(--tex) 0 14px, transparent 14px 28px);
+  background-size:auto;
+}
+/* Carbon weave */
+.bg-carbon{
+  background-image:
+    repeating-linear-gradient(45deg,  var(--tex) 0 1px, transparent 1px 7px),
+    repeating-linear-gradient(-45deg, var(--tex) 0 1px, transparent 1px 7px);
+  background-size:14px 14px;
+}
+/* Print halftone */
+.bg-halftone{
+  background-image:radial-gradient(var(--tex) 1.4px, transparent 1.5px);
+  background-size:11px 11px;
+}
+/* Drafting grid */
+.bg-grid{
+  background-image:
+    linear-gradient(var(--tex) 1px, transparent 1px),
+    linear-gradient(90deg, var(--tex) 1px, transparent 1px);
+  background-size:28px 28px;
+}
+/* Floodlight from the rafters — tinted by the palette accent */
+.bg-flood{
+  background-image:radial-gradient(ellipse 120% 65% at 50% -8%,
+    color-mix(in srgb, var(--good) 16%, transparent), transparent 72%);
+  background-repeat:no-repeat;
+  background-attachment:fixed;
+  background-size:auto;
+}
+
+/* Texture swatches in the picker reuse the exact same rules. */
+.texs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:6px}
+@media (min-width:520px){ .texs{grid-template-columns:repeat(5,minmax(0,1fr))} }
+.tex{
+  padding:0;border:2px solid var(--line-2);border-radius:var(--r-md);
+  background-color:var(--paper);overflow:hidden;
+  transition:border-color .15s, transform .08s;
+}
+.tex:active{transform:scale(.97)}
+.tex.on{border-color:var(--good)}
+.tex__patch{display:block;height:40px;background-color:var(--paper);background-attachment:scroll}
+.tex__name{
+  display:block;padding:5px 4px 6px;font-size:9.5px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);
+  border-top:1px solid var(--line);text-align:center;
+}
+.picker__label{
+  font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-3);margin:22px 0 10px;
+}
+.picker__label:first-of-type{margin-top:0}
 
 </style>
 </head>

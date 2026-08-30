@@ -115,7 +115,37 @@ const SKINS = [
     paper: '#e9e7e1', ink: '#131210', line: '#b8b3a7', chips: ['#131210', '#b1341f'] },
 ];
 
+const TEXTURES = [
+  { id: 'none',     name: 'Flat' },
+  { id: 'plate',    name: 'Tread' },
+  { id: 'brushed',  name: 'Brushed' },
+  { id: 'concrete', name: 'Concrete' },
+  { id: 'hazard',   name: 'Hazard' },
+  { id: 'carbon',   name: 'Carbon' },
+  { id: 'halftone', name: 'Halftone' },
+  { id: 'grid',     name: 'Grid' },
+  { id: 'flood',    name: 'Floodlight' },
+];
+
 const SKIN_KEY = 'checkmark.skin';
+const TEX_KEY  = 'checkmark.texture';
+const DEFAULT_TEX = 'plate';
+
+function currentTexture() {
+  try { return localStorage.getItem(TEX_KEY) || DEFAULT_TEX; }
+  catch { return DEFAULT_TEX; }
+}
+
+function applyTexture(id, persist = true) {
+  const tex = TEXTURES.some(t => t.id === id) ? id : DEFAULT_TEX;
+  document.body.classList.forEach(c => {
+    if (c.startsWith('bg-')) document.body.classList.remove(c);
+  });
+  if (tex !== 'none') document.body.classList.add('bg-' + tex);
+  if (persist) { try { localStorage.setItem(TEX_KEY, tex); } catch {} }
+  return tex;
+}
+
 const DEFAULT_SKIN = 'muscle';
 
 function currentSkin() {
@@ -153,6 +183,13 @@ function openSkinPicker() {
       <span class="skin__name" style="border-color:${sk.line}">${esc(sk.name)}<span class="skin__note">${esc(sk.note)}</span></span>
     </button>`).join('');
 
+  const activeTex = currentTexture();
+  const texes = TEXTURES.map(t => `
+    <button class="tex ${t.id === activeTex ? 'on' : ''}" data-tex-id="${t.id}">
+      <span class="tex__patch ${t.id === 'none' ? '' : 'bg-' + t.id}"></span>
+      <span class="tex__name">${esc(t.name)}</span>
+    </button>`).join('');
+
   mountSheet(`
     <div class="sheet__head">
       <div style="flex:1">
@@ -161,7 +198,10 @@ function openSkinPicker() {
       </div>
       <button class="closebtn" id="closeX">${ic('x')}</button>
     </div>
-    <div class="skins">${cards}</div>`);
+    <p class="picker__label">Palette</p>
+    <div class="skins">${cards}</div>
+    <p class="picker__label">Texture</p>
+    <div class="texs">${texes}</div>`);
 
   $('#closeX').onclick = closeSheet;
   $('#modalRoot').querySelectorAll('[data-skin-id]').forEach(b => {
@@ -173,6 +213,14 @@ function openSkinPicker() {
         x.classList.toggle('on', isOn);
         x.style.borderColor = isOn ? sk.chips[0] : sk.line;
       });
+    };
+  });
+
+  $('#modalRoot').querySelectorAll('[data-tex-id]').forEach(b => {
+    b.onclick = () => {
+      applyTexture(b.dataset.texId);
+      $('#modalRoot').querySelectorAll('[data-tex-id]').forEach(x =>
+        x.classList.toggle('on', x === b));
     };
   });
 }
@@ -189,6 +237,7 @@ main();
 
 async function main() {
   applySkin(currentSkin(), false);
+  applyTexture(currentTexture(), false);
 
   // 1. Config present?
   if (!CFG.SUPABASE_URL || !CFG.SUPABASE_ANON_KEY) return showSetup();
