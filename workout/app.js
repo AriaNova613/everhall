@@ -631,7 +631,7 @@ function pendingBoard(m) {
   return `
     <div class="board card board--pending">
       <div class="board__head">
-        <div class="board__av" style="background:${colorVar(m.color)};opacity:.45">${esc((m.display_name || '?').slice(0, 2).toUpperCase())}</div>
+        <div class="board__av" style="background:${colorVar(m.color)};opacity:.45">${esc(initials(m))}</div>
         <div class="board__id">
           <div class="board__name">${esc(m.display_name)}</div>
           <div class="board__sub">${esc(m.email)}</div>
