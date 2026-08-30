@@ -90,12 +90,106 @@ const getCheckin = (uid, day) => state.checkins.get(key(uid, day));
 const colorVar = c => `var(--${['indigo', 'amber', 'teal', 'rose'].includes(c) ? c : 'indigo'})`;
 const initials = p => (p.display_name || p.email || '?').trim().slice(0, 2).toUpperCase();
 
+/* ---------------------------------------------------------------------------
+   Skins. The chip colours below are only for the picker preview — the real
+   palettes live in the stylesheet, keyed on [data-skin].
+   Stored per-device in localStorage: it is a display preference, not shared
+   state, and your brother should be able to run a different look to yours.
+   --------------------------------------------------------------------------- */
+const SKINS = [
+  { id: 'muscle', name: 'Muscle Beach', note: 'Venice gold, tar black',
+    paper: '#0d0b07', ink: '#f7e9c8', line: '#41371f', chips: ['#f0b429', '#e2603c'] },
+  { id: 'feral',  name: 'Feral',        note: 'Black and white, no mercy',
+    paper: '#080808', ink: '#ffffff', line: '#3b3b3b', chips: ['#f5f5f5', '#8f8f8f'] },
+  { id: 'blood',  name: 'Blood & Iron', note: 'Crimson on gunmetal',
+    paper: '#0d0e10', ink: '#e9e7e4', line: '#343a41', chips: ['#d02b30', '#8b98a4'] },
+  { id: 'chrome', name: 'Chrome',       note: 'Cold polished steel',
+    paper: '#0b0d11', ink: '#e8eef5', line: '#333c49', chips: ['#7dd3fc', '#c3ccd6'] },
+  { id: 'toxic',  name: 'Toxic',        note: 'Acid green thrash',
+    paper: '#070905', ink: '#eaf6d9', line: '#2c3719', chips: ['#a3e635', '#f97316'] },
+  { id: 'rust',   name: 'Rust Belt',    note: 'Oxidised iron, concrete',
+    paper: '#100d0b', ink: '#f1e7de', line: '#3e3229', chips: ['#d4571c', '#8f9b8e'] },
+  { id: 'doom',   name: 'Doom',         note: 'Violet murk',
+    paper: '#0a0811', ink: '#ece7f5', line: '#332947', chips: ['#a855f7', '#22d3ee'] },
+  { id: 'chalk',  name: 'Chalk',        note: 'Daylight. Fight-poster print',
+    paper: '#e9e7e1', ink: '#131210', line: '#b8b3a7', chips: ['#131210', '#b1341f'] },
+];
+
+const SKIN_KEY = 'checkmark.skin';
+const DEFAULT_SKIN = 'muscle';
+
+function currentSkin() {
+  try { return localStorage.getItem(SKIN_KEY) || DEFAULT_SKIN; }
+  catch { return DEFAULT_SKIN; }
+}
+
+function applySkin(id, persist = true) {
+  const skin = SKINS.some(s => s.id === id) ? id : DEFAULT_SKIN;
+  document.documentElement.setAttribute('data-skin', skin);
+  if (persist) { try { localStorage.setItem(SKIN_KEY, skin); } catch {} }
+
+  // Keep the mobile browser chrome in step with the palette.
+  const bar = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.remove());
+  if (bar) {
+    const m = document.createElement('meta');
+    m.name = 'theme-color';
+    m.content = bar;
+    document.head.appendChild(m);
+  }
+  return skin;
+}
+
+function openSkinPicker() {
+  const active = currentSkin();
+  const cards = SKINS.map(sk => `
+    <button class="skin ${sk.id === active ? 'on' : ''}" data-skin-id="${sk.id}"
+            style="background:${sk.paper};color:${sk.ink};border-color:${sk.id === active ? sk.chips[0] : sk.line}">
+      <span class="skin__swatch">
+        <span class="skin__chip" style="background:${sk.chips[0]}"></span>
+        <span class="skin__chip" style="background:${sk.chips[1]}"></span>
+        <svg class="skin__tick" style="color:${sk.chips[0]}"><use href="#i-check"/></svg>
+      </span>
+      <span class="skin__name" style="border-color:${sk.line}">${esc(sk.name)}<span class="skin__note">${esc(sk.note)}</span></span>
+    </button>`).join('');
+
+  mountSheet(`
+    <div class="sheet__head">
+      <div style="flex:1">
+        <div class="sheet__title">Pick your look</div>
+        <div class="sheet__sub">Saved on this device only — ${esc(otherName())} keeps theirs.</div>
+      </div>
+      <button class="closebtn" id="closeX">${ic('x')}</button>
+    </div>
+    <div class="skins">${cards}</div>`);
+
+  $('#closeX').onclick = closeSheet;
+  $('#modalRoot').querySelectorAll('[data-skin-id]').forEach(b => {
+    b.onclick = () => {
+      applySkin(b.dataset.skinId);
+      $('#modalRoot').querySelectorAll('[data-skin-id]').forEach(x => {
+        const sk = SKINS.find(k => k.id === x.dataset.skinId);
+        const isOn = x === b;
+        x.classList.toggle('on', isOn);
+        x.style.borderColor = isOn ? sk.chips[0] : sk.line;
+      });
+    };
+  });
+}
+
+function otherName() {
+  const other = state.profiles.find(p => p.id !== state.me?.id);
+  return other ? other.display_name : 'everyone else';
+}
+
 /* ===========================================================================
    BOOT
    =========================================================================== */
 main();
 
 async function main() {
+  applySkin(currentSkin(), false);
+
   // 1. Config present?
   if (!CFG.SUPABASE_URL || !CFG.SUPABASE_ANON_KEY) return showSetup();
 
@@ -362,6 +456,7 @@ function wireChrome() {
   $('#prevM').onclick = () => stepMonth(-1);
   $('#nextM').onclick = () => stepMonth(1);
   $('#aboutBtn').onclick = showAbout;
+  $('#skinBtn').onclick = openSkinPicker;
 
   // Re-sync whenever the app comes back to the foreground.
   document.addEventListener('visibilitychange', () => {
@@ -466,7 +561,7 @@ function renderWeek() {
       const on = !!getCheckin(p.id, d);
       const future = d > t;
       const cls = ['wd', on ? 'on' : '', future ? 'future' : '', d === t ? 'today' : ''].filter(Boolean).join(' ');
-      const style = on ? `style="background:${colorVar(p.color)};color:#fff"` : '';
+      const style = on ? `style="background:${colorVar(p.color)};color:var(--paper)"` : '';
       return `<div class="${cls}" ${style} title="${esc(prettyDate(d))}">${on ? ic('check') : ''}</div>`;
     }).join('');
     return `

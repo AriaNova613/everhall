@@ -15,57 +15,127 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-192.png">
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script>
+  /* Apply the saved skin before first paint, so there is no flash of the
+     default palette on load. */
+  try {
+    var s = localStorage.getItem('checkmark.skin');
+    if (s) document.documentElement.setAttribute('data-skin', s);
+  } catch (e) {}
+</script>
+
 <style>
 /* ===========================================================================
    Tokens
    =========================================================================== */
+/* ---------------------------------------------------------------------------
+   Palettes ("skins"). Every skin defines the same token contract, so the rest
+   of the stylesheet never needs to know which one is active.
+
+   --indigo / --amber / --teal / --rose are the PERSON accent slots. Profiles
+   store one of those four names in the database, so a skin just re-points the
+   slot at a colour that fits it — no data migration to change the look.
+   --------------------------------------------------------------------------- */
 :root{
-  --paper:#faf8f4;
-  --card:#ffffff;
-  --ink:#1a1720;
-  --ink-2:#5d5769;
-  --ink-3:#918b9d;
-  --line:#e6e1da;
-  --line-2:#d6d0c6;
-  --shadow:0 1px 2px rgba(26,23,32,.05), 0 8px 24px -12px rgba(26,23,32,.18);
-  --shadow-lg:0 2px 6px rgba(26,23,32,.08), 0 24px 48px -20px rgba(26,23,32,.34);
-
-  --indigo:#4f46e5;
-  --indigo-soft:#eef0fe;
-  --amber:#c2680a;
-  --amber-soft:#fdf1e2;
-  --teal:#0d7f76;
-  --teal-soft:#e3f5f2;
-  --rose:#c0396b;
-  --rose-soft:#fdeef3;
-
-  --good:#15803d;
-  --miss:#cbc5bb;
-  --danger:#b42318;
-
-  --r-sm:8px; --r-md:12px; --r-lg:18px; --r-xl:26px;
+  /* geometry + type are shared by every skin: plates, not pills */
+  --r-sm:3px; --r-md:4px; --r-lg:6px; --r-xl:10px;
   --sp:16px;
   --maxw:1120px;
-  --font:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font:'Barlow Condensed','Arial Narrow',system-ui,-apple-system,sans-serif;
+  --font-display:'Anton','Arial Narrow',Impact,sans-serif;
+  --font-body:ui-sans-serif,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --grain:.055;
+  --sheen:rgba(255,255,255,.045);
+  --shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 2px 10px rgba(0,0,0,.5);
+  --shadow-lg:0 1px 0 rgba(255,255,255,.05) inset, 0 24px 60px -18px rgba(0,0,0,.85);
 }
-@media (prefers-color-scheme: dark){
-  :root{
-    --paper:#14131a;
-    --card:#1e1c26;
-    --ink:#f2eff5;
-    --ink-2:#a9a2b6;
-    --ink-3:#767084;
-    --line:#2e2b39;
-    --line-2:#3d3949;
-    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
-    --shadow-lg:0 2px 6px rgba(0,0,0,.5), 0 24px 48px -20px rgba(0,0,0,.8);
-    --indigo:#8b83ff; --indigo-soft:#262340;
-    --amber:#e79a45;  --amber-soft:#33261a;
-    --teal:#3fbdb0;   --teal-soft:#12302e;
-    --rose:#f07da5;   --rose-soft:#33202a;
-    --good:#4ade80;
-    --miss:#3a3646;
-  }
+
+/* 1. MUSCLE BEACH — Venice gold on tar black. The default. */
+:root, :root[data-skin="muscle"]{
+  --paper:#0d0b07; --card:#171309;
+  --ink:#f7e9c8; --ink-2:#b9a077; --ink-3:#7d6a4d;
+  --line:#2b2417; --line-2:#41371f;
+  --good:#f0b429; --miss:#2b2417; --danger:#e0533a;
+  --indigo:#f0b429; --amber:#e2603c; --teal:#c9a227; --rose:#b5533c;
+  --theme:#0d0b07;
+}
+
+/* 2. FERAL — black and white, no mercy. */
+:root[data-skin="feral"]{
+  --paper:#080808; --card:#131313;
+  --ink:#ffffff; --ink-2:#a6a6a6; --ink-3:#6c6c6c;
+  --line:#242424; --line-2:#3b3b3b;
+  --good:#ffffff; --miss:#242424; --danger:#d13b3b;
+  --indigo:#f5f5f5; --amber:#8f8f8f; --teal:#c9c9c9; --rose:#6e6e6e;
+  --theme:#080808;
+}
+
+/* 3. BLOOD & IRON — crimson on gunmetal. */
+:root[data-skin="blood"]{
+  --paper:#0d0e10; --card:#16191d;
+  --ink:#e9e7e4; --ink-2:#98a0a8; --ink-3:#697079;
+  --line:#22262b; --line-2:#343a41;
+  --good:#d02b30; --miss:#22262b; --danger:#d02b30;
+  --indigo:#d02b30; --amber:#8b98a4; --teal:#a8563a; --rose:#e0685c;
+  --theme:#0d0e10;
+}
+
+/* 4. CHROME — cold polished steel. */
+:root[data-skin="chrome"]{
+  --paper:#0b0d11; --card:#14181e;
+  --ink:#e8eef5; --ink-2:#9db0c2; --ink-3:#68788a;
+  --line:#1f242e; --line-2:#333c49;
+  --good:#7dd3fc; --miss:#1f242e; --danger:#f26d6d;
+  --indigo:#7dd3fc; --amber:#c3ccd6; --teal:#5eead4; --rose:#f0a8c0;
+  --theme:#0b0d11;
+}
+
+/* 5. TOXIC — acid green thrash. */
+:root[data-skin="toxic"]{
+  --paper:#070905; --card:#101408;
+  --ink:#eaf6d9; --ink-2:#9fb583; --ink-3:#66784e;
+  --line:#1a2110; --line-2:#2c3719;
+  --good:#a3e635; --miss:#1a2110; --danger:#f97316;
+  --indigo:#a3e635; --amber:#f97316; --teal:#5ccf7a; --rose:#d4d425;
+  --theme:#070905;
+}
+
+/* 6. RUST BELT — oxidised iron on cold concrete. */
+:root[data-skin="rust"]{
+  --paper:#100d0b; --card:#1a1512;
+  --ink:#f1e7de; --ink-2:#b09c8c; --ink-3:#7a6a5d;
+  --line:#2a221c; --line-2:#3e3229;
+  --good:#d4571c; --miss:#2a221c; --danger:#e0533a;
+  --indigo:#d4571c; --amber:#8f9b8e; --teal:#c98f34; --rose:#a8553f;
+  --theme:#100d0b;
+}
+
+/* 7. DOOM — violet murk. */
+:root[data-skin="doom"]{
+  --paper:#0a0811; --card:#14101f;
+  --ink:#ece7f5; --ink-2:#a99bc4; --ink-3:#73678b;
+  --line:#211a32; --line-2:#332947;
+  --good:#a855f7; --miss:#211a32; --danger:#f0567f;
+  --indigo:#a855f7; --amber:#22d3ee; --teal:#7c8cf8; --rose:#e879f9;
+  --theme:#0a0811;
+}
+
+/* 8. CHALK — the light one. Fight-poster newsprint. */
+:root[data-skin="chalk"]{
+  --paper:#e9e7e1; --card:#f7f6f2;
+  --ink:#131210; --ink-2:#4a4740; --ink-3:#837f75;
+  --line:#d5d1c7; --line-2:#b8b3a7;
+  --good:#131210; --miss:#d5d1c7; --danger:#b1341f;
+  --indigo:#131210; --amber:#b1341f; --teal:#3f6b4f; --rose:#8a5a2b;
+  --theme:#e9e7e1;
+  --sheen:rgba(0,0,0,.028);
+  --grain:.04;
+  --shadow:0 1px 2px rgba(19,18,16,.10), 0 6px 18px -10px rgba(19,18,16,.30);
+  --shadow-lg:0 2px 6px rgba(19,18,16,.14), 0 26px 54px -20px rgba(19,18,16,.42);
 }
 
 *,*::before,*::after{box-sizing:border-box}
@@ -112,7 +182,7 @@ h1,h2,h3{margin:0;line-height:1.2}
 .spacer{flex:1}
 .iconbtn{
   display:inline-flex;align-items:center;justify-content:center;gap:7px;
-  min-height:38px;padding:0 13px;border-radius:999px;
+  min-height:38px;padding:0 13px;border-radius:var(--r-sm);
   background:transparent;border:1px solid var(--line-2);
   font-size:13px;font-weight:600;color:var(--ink-2);
   transition:background .15s, color .15s, border-color .15s;
@@ -125,7 +195,7 @@ h1,h2,h3{margin:0;line-height:1.2}
 }
 .live .dot{width:6px;height:6px;border-radius:50%;background:var(--miss);transition:background .3s}
 .live.on .dot{background:var(--good);box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 22%,transparent)}
-@media (max-width:560px){ .live span{display:none} }
+@media (max-width:560px){ .live span{display:none} #skinBtn span,#signOut span{display:none} }
 
 /* ===========================================================================
    Gate (sign-in / setup)
@@ -134,7 +204,7 @@ h1,h2,h3{margin:0;line-height:1.2}
 .gate__card{width:100%;max-width:430px;padding:30px}
 .gate__mark{
   width:52px;height:52px;border-radius:15px;display:grid;place-items:center;
-  background:var(--good);color:#fff;margin-bottom:18px;
+  background:var(--good);color:var(--paper);margin-bottom:18px;
 }
 .gate__mark svg{width:30px;height:30px}
 .gate h1{font-size:26px;letter-spacing:-.03em;margin-bottom:7px}
@@ -216,8 +286,8 @@ section{margin-bottom:30px}
   font-size:14px;
 }
 .peer__av{
-  width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;
-  font-size:12px;font-weight:750;color:#fff;
+  width:32px;height:32px;border-radius:var(--r-sm);flex:none;display:grid;place-items:center;
+  font-size:12px;font-weight:750;color:var(--paper);
 }
 .peer__txt{flex:1;min-width:0}
 .peer__name{font-weight:700}
@@ -244,14 +314,14 @@ section{margin-bottom:30px}
 .weekrow__name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .weekdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;min-width:0}
 .wd{
-  aspect-ratio:1;min-width:0;border-radius:9px;display:grid;place-items:center;position:relative;
+  aspect-ratio:1;min-width:0;border-radius:3px;display:grid;place-items:center;position:relative;
   background:var(--paper);border:1px solid var(--line);
 }
 .wd svg{width:17px;height:17px}
 .wd.on{border-color:transparent}
 .wd.future{opacity:.35}
 .wd.today{box-shadow:inset 0 0 0 2px var(--ink-3)}
-.wd.today.on{box-shadow:inset 0 0 0 2px rgba(255,255,255,.6)}
+.wd.today.on{box-shadow:inset 0 0 0 2px var(--paper)}
 .weekhdr{display:grid;grid-template-columns:76px minmax(0,1fr) 40px;gap:11px}
 @media (max-width:400px){ .weekhdr{grid-template-columns:56px minmax(0,1fr) 34px;gap:7px} }
 .weekhdr__labels{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;min-width:0}
@@ -276,7 +346,7 @@ section{margin-bottom:30px}
 
 .board{padding:18px;display:flex;flex-direction:column;min-width:0}
 .board__head{display:flex;align-items:center;gap:11px;margin-bottom:16px}
-.board__av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:750;color:#fff;flex:none}
+.board__av{width:36px;height:36px;border-radius:var(--r-sm);display:grid;place-items:center;font-size:13px;font-weight:750;color:var(--paper);flex:none}
 .board__id{flex:1;min-width:0}
 .board__name{font-size:16px;font-weight:750;letter-spacing:-.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .board__sub{font-size:12px;color:var(--ink-3)}
@@ -294,7 +364,7 @@ section{margin-bottom:30px}
 .dow span{text-align:center;font-size:10.5px;font-weight:700;color:var(--ink-3);letter-spacing:.05em}
 .grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
 .cell{
-  aspect-ratio:1;min-width:0;border-radius:10px;position:relative;
+  aspect-ratio:1;min-width:0;border-radius:3px;position:relative;
   background:var(--paper);border:1px solid var(--line);
   display:flex;align-items:center;justify-content:center;
   font-size:12.5px;font-weight:600;color:var(--ink-3);
@@ -308,14 +378,14 @@ section{margin-bottom:30px}
 .cell.readonly{cursor:default}
 .cell.today{box-shadow:inset 0 0 0 2px var(--ink-3)}
 .cell.today.on{box-shadow:inset 0 0 0 2px rgba(255,255,255,.65)}
-.cell.on{border-color:transparent;color:#fff}
-.cell.on .cell__num{opacity:.72;font-size:10px;position:absolute;top:3px;left:5px;font-weight:700}
+.cell.on{border-color:transparent;color:var(--paper)}
+.cell.on .cell__num{opacity:.82;font-size:10px;position:absolute;top:3px;left:5px;font-weight:700}
 .cell__check{width:60%;height:60%}
 .cell__tagdot{
   position:absolute;bottom:4px;left:50%;transform:translateX(-50%);
   width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.75;
 }
-.cell.on .cell__tagdot{background:#fff}
+.cell.on .cell__tagdot{background:var(--paper)}
 
 .board--pending{opacity:.7;border-style:dashed}
 .pending__note{
@@ -366,7 +436,7 @@ section{margin-bottom:30px}
 .taggroup{margin-bottom:16px}
 .tags{display:flex;flex-wrap:wrap;gap:7px}
 .tag{
-  padding:8px 13px;border-radius:999px;border:1px solid var(--line-2);
+  padding:8px 13px;border-radius:var(--r-sm);border:1px solid var(--line-2);
   background:var(--paper);font-size:13.5px;font-weight:600;color:var(--ink-2);
   transition:all .14s;
 }
@@ -381,12 +451,12 @@ section{margin-bottom:30px}
 .roview{padding:14px 16px;border-radius:var(--r-md);background:var(--paper);border:1px solid var(--line)}
 .roview .eyebrow{margin-bottom:8px}
 .chiplist{display:flex;flex-wrap:wrap;gap:6px}
-.chip{padding:5px 11px;border-radius:999px;background:var(--card);border:1px solid var(--line-2);font-size:12.5px;font-weight:600}
+.chip{padding:5px 11px;border-radius:var(--r-sm);background:var(--card);border:1px solid var(--line-2);font-size:12.5px;font-weight:600}
 .note{margin-top:12px;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
 
 .toast{
   position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);
-  z-index:80;padding:11px 18px;border-radius:999px;
+  z-index:80;padding:11px 18px;border-radius:var(--r-md);
   background:var(--ink);color:var(--paper);font-size:13.5px;font-weight:600;
   box-shadow:var(--shadow-lg);animation:rise .2s ease;max-width:calc(100vw - 32px);
 }
@@ -394,6 +464,106 @@ section{margin-bottom:30px}
 
 .footnote{text-align:center;font-size:12px;color:var(--ink-3);padding:10px 0 4px}
 .footnote button{background:none;border:0;color:var(--ink-3);text-decoration:underline;text-underline-offset:2px;padding:0;font-size:12px}
+
+/* ===========================================================================
+   GRIT LAYER — texture, display type, stamped-metal surfaces.
+   Appended last so it wins the cascade over the base rules above.
+   =========================================================================== */
+
+/* Film grain over everything. Non-interactive, so it never eats a tap. */
+body::before{
+  content:"";position:fixed;inset:0;z-index:9999;pointer-events:none;
+  opacity:var(--grain);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Display face for anything that should read like a gym poster. */
+.brand span,
+.gate h1,
+.sheet__title,
+.today__date,
+.board__name,
+.monthbar__label,
+.stat__n,
+.bigcheck__lbl,
+.weekrow__count,
+.toast{
+  font-family:var(--font-display);
+  font-weight:400;
+  letter-spacing:.01em;
+}
+.brand span{text-transform:uppercase;letter-spacing:.06em;font-size:19px}
+.gate h1{text-transform:uppercase;letter-spacing:.02em;font-size:30px}
+.today__date{text-transform:uppercase;font-size:21px;letter-spacing:.02em}
+.board__name{text-transform:uppercase;font-size:18px;letter-spacing:.03em}
+.monthbar__label{text-transform:uppercase;font-size:19px;letter-spacing:.05em}
+.stat__n{font-size:26px}
+.sheet__title{text-transform:uppercase;font-size:20px;letter-spacing:.02em}
+.bigcheck.done .bigcheck__lbl{font-size:20px;text-transform:uppercase;letter-spacing:.04em}
+
+/* Labels get the stencil treatment. */
+.eyebrow,.stat__l,.board__you{letter-spacing:.16em;font-weight:600}
+.btn,.iconbtn,.tag,.navbtn{text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+.btn{font-weight:700}
+
+/* Prose stays in a readable face — condensed type is for labels, not paragraphs. */
+.note,.board__rule p,.roview p,.gate p.sub,.msg,.pending__note,.peer__state{
+  font-family:var(--font-body);letter-spacing:0;
+}
+
+/* Brushed sheen on every panel. */
+.card,.sheet{
+  background-image:linear-gradient(180deg,var(--sheen),transparent 42%);
+  border-width:1px;
+}
+
+/* Stamped plates: a checked day should feel struck, not filled. */
+.cell.on,.wd.on{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.30), inset 0 -2px 4px rgba(0,0,0,.30);
+}
+.cell.on .cell__check,.wd.on svg{filter:drop-shadow(0 1px 1px rgba(0,0,0,.45))}
+.cell{font-weight:600}
+
+/* Today: a hazard-tape edge rather than a soft ring. */
+.cell.today:not(.on){
+  box-shadow:inset 0 0 0 2px var(--ink-2);
+}
+.cell.today.on{box-shadow:inset 0 0 0 2px var(--paper), inset 0 -2px 4px rgba(0,0,0,.3)}
+
+/* The main action reads as a struck steel plate. */
+.bigcheck{border-width:2px}
+.bigcheck.done{
+  background-image:linear-gradient(180deg,rgba(255,255,255,.07),transparent 55%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18), 0 2px 12px rgba(0,0,0,.4);
+}
+
+/* App bar: a machined edge under it. */
+.appbar{border-bottom-width:2px}
+
+/* ===========================================================================
+   Skin picker
+   =========================================================================== */
+.skins{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:520px){ .skins{grid-template-columns:repeat(3,minmax(0,1fr))} }
+.skin{
+  padding:0;border:2px solid var(--line-2);border-radius:var(--r-md);
+  overflow:hidden;text-align:left;display:block;width:100%;
+  transition:border-color .15s, transform .08s;
+}
+.skin:hover{border-color:var(--ink-3)}
+.skin:active{transform:scale(.98)}
+.skin.on{border-color:var(--good)}
+.skin__swatch{height:44px;display:flex;align-items:center;gap:6px;padding:0 11px}
+.skin__chip{width:15px;height:15px;border-radius:2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
+.skin__tick{margin-left:auto;width:15px;height:15px;opacity:0}
+.skin.on .skin__tick{opacity:1}
+.skin__name{
+  padding:7px 11px 10px;font-size:12px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.11em;
+  border-top:1px solid currentColor;
+}
+.skin__note{display:block;font-size:10.5px;font-weight:500;letter-spacing:.04em;text-transform:none;opacity:.62;margin-top:1px}
+
 </style>
 </head>
 <body>
@@ -406,6 +576,7 @@ section{margin-bottom:30px}
   <symbol id="i-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></symbol>
   <symbol id="i-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
   <symbol id="i-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+  <symbol id="i-skin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></symbol>
   <symbol id="i-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/></symbol>
 </svg>
 
@@ -436,7 +607,8 @@ section{margin-bottom:30px}
       </div>
       <div class="spacer"></div>
       <div class="live" id="live" title="Live sync"><span class="dot"></span><span>Live</span></div>
-      <button class="iconbtn" id="signOut"><svg><use href="#i-out"/></svg>Sign out</button>
+      <button class="iconbtn" id="skinBtn" title="Change the look"><svg><use href="#i-skin"/></svg><span>Look</span></button>
+      <button class="iconbtn" id="signOut"><svg><use href="#i-out"/></svg><span>Sign out</span></button>
     </div>
   </header>
 
