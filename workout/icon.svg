@@ -1,6 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Checkmark">
-  <rect width="512" height="512" rx="112" fill="#15803d"/>
-  <path d="M139 267 L212 341 L373 175"
-        fill="none" stroke="#ffffff" stroke-width="58"
-        stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Carr Athletics">
+  <rect width="200" height="200" rx="44" fill="#0d0b07"/>
+  <g fill="#f0b429">
+    <!-- a loaded bar, sagging under the weight -->
+    <path d="M40,98 Q100,115 160,98" fill="none" stroke="#f0b429" stroke-width="16" stroke-linecap="butt"/>
+    <rect x="30" y="69" width="20" height="58" rx="4" transform="rotate(15 40 98)"/>
+    <rect x="150" y="69" width="20" height="58" rx="4" transform="rotate(-15 160 98)"/>
+    <rect x="16.5" y="75" width="13" height="36" rx="3" transform="rotate(15 23 93)"/>
+    <rect x="170.5" y="75" width="13" height="36" rx="3" transform="rotate(-15 177 93)"/>
+  </g>
 </svg>

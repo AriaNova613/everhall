@@ -1,5 +1,5 @@
 /* ===========================================================================
-   Checkmark — shared workout accountability board
+   Carr Athletics — shared workout accountability board
    Vanilla JS, no build step. Talks to Supabase for auth + data.
    =========================================================================== */
 
@@ -273,7 +273,7 @@ function showGate(html) {
 function showSetup() {
   showGate(`
     <h1>Almost there</h1>
-    <p class="sub">Checkmark is deployed, but it hasn't been pointed at its database yet.</p>
+    <p class="sub">Carr Athletics is deployed, but it hasn't been pointed at its database yet.</p>
     <ol>
       <li>Open your Supabase project → <b>Settings → API</b>.</li>
       <li>Copy the <b>Project URL</b> and the <b>anon / public</b> key.</li>
@@ -298,8 +298,7 @@ function showSignIn(message = '', prefill = '') {
     <div class="or">or</div>` : '';
 
   showGate(`
-    <h1>Checkmark</h1>
-    <p class="sub">A shared workout board. Sign in with the email you were invited with.</p>
+    <p class="sub">One check a day. Sign in with the email you were invited with.</p>
     ${googleBtn}
     <div class="stack">
       <input class="field" id="email" type="email" inputmode="email" autocomplete="email"
@@ -372,7 +371,7 @@ function authErrorText(error) {
   if (raw.includes('checkmark_not_invited') ||
       raw.includes('database error') ||
       raw.includes('unexpected_failure')) {
-    return 'That email is not on the list. Checkmark is invite-only.';
+    return 'That email is not on the list. This board is invite-only.';
   }
   if (raw.includes('rate limit') || raw.includes('too many') || raw.includes('60 seconds')) {
     return 'Too many sign-in emails just now. Wait a few minutes and try again.';
@@ -872,9 +871,34 @@ async function saveDay(iso, checked, tags, note) {
 }
 
 function celebrate() {
-  const el = $('#bigCheck');
-  if (el) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
-  if (navigator.vibrate) { try { navigator.vibrate(18); } catch {} }
+  const btn = $('#bigCheck');
+  if (!btn) return;
+
+  // restart the stamp/ring animation even on a repeat tap
+  btn.classList.remove('pop');
+  void btn.offsetWidth;
+  btn.classList.add('pop');
+
+  if (navigator.vibrate) { try { navigator.vibrate([12, 40, 18]); } catch {} }
+
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  // Sparks fly no further than ~78px, which keeps them inside the button on the
+  // narrowest phone and so can never cause the page to scroll sideways.
+  const burst = document.createElement('div');
+  burst.className = 'burst';
+  for (let i = 0; i < 16; i++) {
+    const s = document.createElement('i');
+    const angle = (i / 16) * Math.PI * 2 + (Math.random() - 0.5) * 0.35;
+    const dist = 44 + Math.random() * 34;
+    s.style.setProperty('--dx', (Math.cos(angle) * dist).toFixed(1) + 'px');
+    s.style.setProperty('--dy', (Math.sin(angle) * dist).toFixed(1) + 'px');
+    s.style.setProperty('--r', Math.round(Math.random() * 360) + 'deg');
+    s.style.animationDelay = Math.round(Math.random() * 70) + 'ms';
+    burst.appendChild(s);
+  }
+  btn.appendChild(burst);
+  setTimeout(() => burst.remove(), 900);
 }
 
 /* ===========================================================================

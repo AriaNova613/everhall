@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Checkmark</title>
+<title>Carr Athletics</title>
 <meta name="description" content="A shared workout accountability board.">
 <meta name="theme-color" content="#faf8f4" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#14131a" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Checkmark">
+<meta name="apple-mobile-web-app-title" content="Carr Athletics">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -17,7 +17,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Rye&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <script>
   /* Apply the saved skin before first paint, so there is no flash of the
@@ -60,7 +60,7 @@
   --ink:#f7e9c8; --ink-2:#b9a077; --ink-3:#7d6a4d;
   --line:#2b2417; --line-2:#41371f;
   --good:#f0b429; --miss:#2b2417; --danger:#e0533a;
-  --indigo:#f0b429; --amber:#e2603c; --teal:#c9a227; --rose:#b5533c;
+  --indigo:#f0b429; --amber:#e2603c; --teal:#3f9e8c; --rose:#c76ea0;
   --theme:#0d0b07;
 }
 
@@ -70,7 +70,7 @@
   --ink:#ffffff; --ink-2:#a6a6a6; --ink-3:#6c6c6c;
   --line:#242424; --line-2:#3b3b3b;
   --good:#ffffff; --miss:#242424; --danger:#d13b3b;
-  --indigo:#f5f5f5; --amber:#8f8f8f; --teal:#c9c9c9; --rose:#6e6e6e;
+  --indigo:#ffffff; --amber:#b0b0b0; --teal:#666666; --rose:#8a8a8a;
   --theme:#080808;
 }
 
@@ -80,7 +80,7 @@
   --ink:#e9e7e4; --ink-2:#98a0a8; --ink-3:#697079;
   --line:#22262b; --line-2:#343a41;
   --good:#d02b30; --miss:#22262b; --danger:#d02b30;
-  --indigo:#d02b30; --amber:#8b98a4; --teal:#a8563a; --rose:#e0685c;
+  --indigo:#d02b30; --amber:#8b98a4; --teal:#a8794e; --rose:#c6bcae;
   --theme:#0d0e10;
 }
 
@@ -90,7 +90,7 @@
   --ink:#e8eef5; --ink-2:#9db0c2; --ink-3:#68788a;
   --line:#1f242e; --line-2:#333c49;
   --good:#7dd3fc; --miss:#1f242e; --danger:#f26d6d;
-  --indigo:#7dd3fc; --amber:#c3ccd6; --teal:#5eead4; --rose:#f0a8c0;
+  --indigo:#7dd3fc; --amber:#c3ccd6; --teal:#f2b880; --rose:#a5b4fc;
   --theme:#0b0d11;
 }
 
@@ -100,7 +100,7 @@
   --ink:#eaf6d9; --ink-2:#9fb583; --ink-3:#66784e;
   --line:#1a2110; --line-2:#2c3719;
   --good:#a3e635; --miss:#1a2110; --danger:#f97316;
-  --indigo:#a3e635; --amber:#f97316; --teal:#5ccf7a; --rose:#d4d425;
+  --indigo:#a3e635; --amber:#f97316; --teal:#38bdf8; --rose:#e879a8;
   --theme:#070905;
 }
 
@@ -110,7 +110,7 @@
   --ink:#f1e7de; --ink-2:#b09c8c; --ink-3:#7a6a5d;
   --line:#2a221c; --line-2:#3e3229;
   --good:#d4571c; --miss:#2a221c; --danger:#e0533a;
-  --indigo:#d4571c; --amber:#8f9b8e; --teal:#c98f34; --rose:#a8553f;
+  --indigo:#d4571c; --amber:#8f9b8e; --teal:#2f8f8f; --rose:#d9c8a8;
   --theme:#100d0b;
 }
 
@@ -120,7 +120,7 @@
   --ink:#ece7f5; --ink-2:#a99bc4; --ink-3:#73678b;
   --line:#211a32; --line-2:#332947;
   --good:#a855f7; --miss:#211a32; --danger:#f0567f;
-  --indigo:#a855f7; --amber:#22d3ee; --teal:#7c8cf8; --rose:#e879f9;
+  --indigo:#a855f7; --amber:#22d3ee; --teal:#f472b6; --rose:#a3e635;
   --theme:#0a0811;
 }
 
@@ -130,7 +130,7 @@
   --ink:#131210; --ink-2:#4a4740; --ink-3:#837f75;
   --line:#d5d1c7; --line-2:#b8b3a7;
   --good:#131210; --miss:#d5d1c7; --danger:#b1341f;
-  --indigo:#131210; --amber:#b1341f; --teal:#3f6b4f; --rose:#8a5a2b;
+  --indigo:#131210; --amber:#b1341f; --teal:#2f6b8f; --rose:#8a5a2b;
   --theme:#e9e7e1;
   --sheen:rgba(0,0,0,.028);
   --grain:.04;
@@ -177,8 +177,10 @@ h1,h2,h3{margin:0;line-height:1.2}
   max-width:var(--maxw);margin:0 auto;padding:10px var(--sp);
   display:flex;align-items:center;gap:12px;
 }
-.brand{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:-.02em;font-size:17px}
-.brand svg{width:22px;height:22px;color:var(--good)}
+.brand{display:flex;align-items:center;min-width:0}
+.brandmark{height:26px;width:auto;max-width:200px;color:var(--good);display:block}
+@media (max-width:430px){ .brandmark{height:23px;max-width:168px} }
+.gate__lockup{width:100%;max-width:250px;color:var(--good);display:block;margin:0 auto 22px}
 .spacer{flex:1}
 .iconbtn{
   display:inline-flex;align-items:center;justify-content:center;gap:7px;
@@ -262,22 +264,30 @@ section{margin-bottom:30px}
 .today__rel{font-size:13px;color:var(--ink-3)}
 
 .bigcheck{
-  width:100%;min-height:112px;border-radius:var(--r-lg);
-  border:2px dashed var(--line-2);background:var(--paper);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
-  color:var(--ink-2);font-weight:650;font-size:15px;
-  transition:border-color .18s, background .18s, color .18s, transform .08s;
+  position:relative;width:100%;min-height:132px;
+  border-radius:var(--r-lg);border:2px solid var(--line-2);
+  background:linear-gradient(180deg, color-mix(in srgb,var(--ink) 7%, var(--card)), var(--card));
+  box-shadow:0 4px 0 var(--line-2), 0 12px 22px -10px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.10);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;
+  color:var(--ink-2);font-weight:700;font-size:15px;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  transition:transform .09s ease, box-shadow .09s ease, border-color .18s, color .18s;
 }
 .bigcheck:hover{border-color:var(--good);color:var(--good)}
-.bigcheck:active{transform:scale(.985)}
-.bigcheck svg{width:34px;height:34px}
-.bigcheck.done{
-  border:2px solid transparent;
-  background:linear-gradient(160deg, color-mix(in srgb,var(--good) 14%,var(--card)), color-mix(in srgb,var(--good) 6%,var(--card)));
-  color:var(--good);
+/* Physical press: the button actually travels down onto its own shadow. */
+.bigcheck:active{
+  transform:translateY(4px);
+  box-shadow:0 0 0 var(--line-2), 0 4px 10px -6px rgba(0,0,0,.5), inset 0 2px 5px rgba(0,0,0,.28);
 }
-.bigcheck.done .bigcheck__lbl{font-size:17px;font-weight:750;letter-spacing:-.01em}
-.bigcheck.done svg{width:44px;height:44px}
+.bigcheck svg{width:36px;height:36px}
+.bigcheck.done{
+  border-color:transparent;color:var(--good);
+  background:linear-gradient(180deg, color-mix(in srgb,var(--good) 20%,var(--card)), color-mix(in srgb,var(--good) 8%,var(--card)));
+  box-shadow:0 4px 0 color-mix(in srgb,var(--good) 45%,var(--card)),
+             0 12px 24px -10px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.16);
+}
+.bigcheck.done svg{width:46px;height:46px}
+.bigcheck.done .bigcheck__lbl{font-size:20px;text-transform:uppercase;letter-spacing:.04em}
 .bigcheck__hint{font-size:12px;font-weight:500;color:var(--ink-3)}
 
 .peer{
@@ -294,9 +304,39 @@ section{margin-bottom:30px}
 .peer__state{color:var(--ink-2);font-size:13px}
 .peer__state.yes{color:var(--good);font-weight:600}
 
-/* pop animation on check */
-@keyframes pop{0%{transform:scale(.7);opacity:0}55%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
-.pop{animation:pop .34s cubic-bezier(.2,.9,.3,1.4)}
+/* celebration */
+@keyframes stamp{
+  0%{transform:scale(.5) rotate(-9deg);opacity:0}
+  45%{transform:scale(1.16) rotate(3deg);opacity:1}
+  70%{transform:scale(.96) rotate(-1deg)}
+  100%{transform:scale(1) rotate(0);opacity:1}
+}
+.bigcheck.pop svg{animation:stamp .52s cubic-bezier(.2,.8,.3,1.3)}
+
+@keyframes ring{0%{transform:scale(.6);opacity:.55}100%{transform:scale(1.9);opacity:0}}
+.bigcheck.pop::after{
+  content:"";position:absolute;left:50%;top:50%;width:120px;height:120px;margin:-60px 0 0 -60px;
+  border-radius:50%;border:3px solid var(--good);pointer-events:none;
+  animation:ring .6s cubic-bezier(.2,.7,.3,1) forwards;
+}
+
+.burst{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.burst i{
+  position:absolute;width:9px;height:9px;border-radius:2px;background:var(--good);
+  animation:spark .72s cubic-bezier(.15,.75,.3,1) forwards;
+}
+/* Opacity gets its own keyframes: sharing the movement easing made the sparks
+   ~96% faded barely halfway through the arc, so the burst was never really seen. */
+@keyframes spark{
+  0%  {transform:translate(0,0) rotate(0deg) scale(.35);opacity:0}
+  14% {opacity:1}
+  72% {opacity:1}
+  100%{transform:translate(var(--dx),var(--dy)) rotate(var(--r)) scale(.95);opacity:0}
+}
+@media (prefers-reduced-motion:reduce){
+  .bigcheck.pop svg,.bigcheck.pop::after,.burst i{animation:none}
+  .burst{display:none}
+}
 
 /* ===========================================================================
    Week strip
@@ -341,8 +381,7 @@ section{margin-bottom:30px}
 .navbtn:disabled{opacity:.3;cursor:not-allowed}
 .navbtn svg{width:16px;height:16px}
 
-.boards{display:grid;gap:18px}
-@media (min-width:860px){ .boards{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px} }
+.boards{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(298px,1fr))}
 
 .board{padding:18px;display:flex;flex-direction:column;min-width:0}
 .board__head{display:flex;align-items:center;gap:11px;margin-bottom:16px}
@@ -670,7 +709,20 @@ body[class*="bg-"]::after{
      ========================================================== -->
 <div id="gate" class="gate" hidden>
   <div class="gate__card card">
-    <div class="gate__mark"><svg><use href="#i-check"/></svg></div>
+    <svg class="gate__lockup" viewBox="0 0 200 152" role="img" aria-label="Carr Athletics">
+      <text x="100" y="52" text-anchor="middle" font-family="Rye,serif" font-size="52" fill="currentColor">CARR</text>
+      <g fill="currentColor">
+        <path d="M46,86 Q100,99 154,86" fill="none" stroke="currentColor" stroke-width="11"/>
+        <rect x="39" y="66" width="14" height="40" rx="3" transform="rotate(13 46 86)"/>
+        <rect x="147" y="66" width="14" height="40" rx="3" transform="rotate(-13 154 86)"/>
+        <rect x="28.5" y="71" width="9" height="24" rx="3" transform="rotate(13 33 83)"/>
+        <rect x="162.5" y="71" width="9" height="24" rx="3" transform="rotate(-13 167 83)"/>
+      </g>
+      <defs><path id="athArc" fill="none" d="M32,118 Q100,140 168,118"/></defs>
+      <text font-family="'Barlow Condensed',sans-serif" font-weight="600" font-size="16"
+            letter-spacing="7" fill="currentColor">
+        <textPath href="#athArc" startOffset="50%" text-anchor="middle">ATHLETICS</textPath></text>
+    </svg>
     <div id="gateBody"></div>
   </div>
 </div>
@@ -682,8 +734,16 @@ body[class*="bg-"]::after{
   <header class="appbar">
     <div class="appbar__in">
       <div class="brand">
-        <svg><use href="#i-check"/></svg>
-        <span>Checkmark</span>
+        <svg class="brandmark" viewBox="0 0 214 30" role="img" aria-label="Carr Athletics">
+          <g fill="currentColor">
+            <path d="M10,14 Q27,20 44,14" fill="none" stroke="currentColor" stroke-width="5"/>
+            <rect x="6" y="6" width="7" height="17" rx="2" transform="rotate(19 9.5 14.5)"/>
+            <rect x="41" y="6" width="7" height="17" rx="2" transform="rotate(-19 44.5 14.5)"/>
+          </g>
+          <text x="56" y="23" font-family="Rye,serif" font-size="21" fill="currentColor">CARR</text>
+          <text x="128" y="22" font-family="'Barlow Condensed',sans-serif" font-weight="600"
+                font-size="11" letter-spacing="3.2" fill="currentColor">ATHLETICS</text>
+        </svg>
       </div>
       <div class="spacer"></div>
       <div class="live" id="live" title="Live sync"><span class="dot"></span><span>Live</span></div>
