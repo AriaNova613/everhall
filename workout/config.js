@@ -6,12 +6,13 @@
    allow-list, so holding this key alone gets you nothing. The keys that must
    never appear here are the ones labelled "secret" / "service_role".
 
-   Supabase project: checkmark  (vwilrlakhcppjcoraodv, ca-central-1)
+   Supabase project: checkmark  (twfwkcmwvwdnbavrsang, ca-central-1)
+   Account: personal (AriaNova613) -> org "AriaNova"
    Find these under Supabase -> Project Settings -> API Keys.
    --------------------------------------------------------------------------- */
 window.CHECKMARK_CONFIG = {
-  SUPABASE_URL: 'https://vwilrlakhcppjcoraodv.supabase.co',
-  SUPABASE_ANON_KEY: 'sb_publishable_aI76ONFgk-GjVdiwDOnlYA_Ih-dpuL6',
+  SUPABASE_URL: 'https://twfwkcmwvwdnbavrsang.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_sI1OBe9cepL5kQfr3bJtAA_PQYIrbIs',
 
   // Flip to true only after the Google provider is configured in Supabase
   // (Authentication -> Providers -> Google). Until then the email sign-in link
