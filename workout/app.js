@@ -116,20 +116,19 @@ const SKINS = [
 ];
 
 const TEXTURES = [
-  { id: 'none',     name: 'Flat' },
-  { id: 'plate',    name: 'Tread' },
-  { id: 'brushed',  name: 'Brushed' },
-  { id: 'concrete', name: 'Concrete' },
-  { id: 'hazard',   name: 'Hazard' },
-  { id: 'carbon',   name: 'Carbon' },
-  { id: 'halftone', name: 'Halftone' },
-  { id: 'grid',     name: 'Grid' },
-  { id: 'flood',    name: 'Floodlight' },
+  { id: 'none',     name: 'Clean' },
+  { id: 'iron',     name: 'Iron' },
+  { id: 'chains',   name: 'Chains' },
+  { id: 'claw',     name: 'Claw' },
+  { id: 'skull',    name: 'Skull' },
+  { id: 'flames',   name: 'Flames' },
+  { id: 'splatter', name: 'Splatter' },
+  { id: 'scratch',  name: 'Scratched' },
 ];
 
 const SKIN_KEY = 'checkmark.skin';
 const TEX_KEY  = 'checkmark.texture';
-const DEFAULT_TEX = 'plate';
+const DEFAULT_TEX = 'iron';
 
 function currentTexture() {
   try { return localStorage.getItem(TEX_KEY) || DEFAULT_TEX; }
@@ -200,7 +199,7 @@ function openSkinPicker() {
     </div>
     <p class="picker__label">Palette</p>
     <div class="skins">${cards}</div>
-    <p class="picker__label">Texture</p>
+    <p class="picker__label">Backdrop</p>
     <div class="texs">${texes}</div>`);
 
   $('#closeX').onclick = closeSheet;

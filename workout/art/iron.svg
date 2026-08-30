@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" viewBox="0 0 220 220">
+  <g fill="#000">
+    <!-- barbell, slightly angled like it was dropped -->
+    <g transform="rotate(-11 110 52)">
+      <rect x="52" y="48" width="116" height="9" rx="4"/>
+      <rect x="44" y="35" width="11" height="35" rx="3"/>
+      <rect x="33" y="41" width="8" height="23" rx="3"/>
+      <rect x="165" y="35" width="11" height="35" rx="3"/>
+      <rect x="179" y="41" width="8" height="23" rx="3"/>
+    </g>
+    <!-- olympic plate, seen face on -->
+    <path fill-rule="evenodd"
+          d="M62,150 m-34,0 a34,34 0 1,0 68,0 a34,34 0 1,0 -68,0
+             M62,150 m-11,0 a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0"/>
+    <!-- dumbbell -->
+    <g transform="rotate(28 165 155)">
+      <rect x="140" y="151" width="50" height="8" rx="4"/>
+      <rect x="132" y="140" width="10" height="30" rx="3"/>
+      <rect x="188" y="140" width="10" height="30" rx="3"/>
+    </g>
+  </g>
+</svg>

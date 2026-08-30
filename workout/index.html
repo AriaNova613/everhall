@@ -139,9 +139,9 @@
 }
 
 *,*::before,*::after{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;background-color:var(--paper)}
 body{
-  margin:0; background-color:var(--paper); color:var(--ink);
+  margin:0; background-color:transparent; color:var(--ink);
   font-family:var(--font); font-size:16px; line-height:1.5;
   -webkit-font-smoothing:antialiased;
   padding-bottom:env(safe-area-inset-bottom);
@@ -158,7 +158,7 @@ h1,h2,h3{margin:0;line-height:1.2}
   color:var(--ink-3);margin:0 0 10px;
 }
 .card{
-  background:color-mix(in srgb, var(--card) 91%, transparent);border:1px solid var(--line);
+  background:color-mix(in srgb, var(--card) 87%, transparent);border:1px solid var(--line);
   border-radius:var(--r-lg);box-shadow:var(--shadow);
 }
 
@@ -566,64 +566,30 @@ body::before{
 
 
 /* ===========================================================================
-   TEXTURES — a second axis, independent of palette. Pure CSS: no images, so
-   any texture combines with any palette and nothing extra is downloaded.
-   --tex is derived from --ink, so a texture re-tints itself per palette.
+   ARTWORK — real drawn graphics (web/art/*.svg), not gradients.
+
+   Each is applied as a CSS *mask* over a flat fill, so the artwork takes the
+   palette's own colour instead of shipping one recoloured copy per palette.
+   The layer sits at z-index:-1, behind the content but above the page colour,
+   which is why --paper lives on <html> above.
    =========================================================================== */
-:root{ --tex:color-mix(in srgb, var(--ink) 7%, transparent); }
+:root{ --art-ink:color-mix(in srgb, var(--ink) 16%, transparent); }
 
-body[class*="bg-"]{ background-repeat:repeat; }
-
-/* Steel tread plate */
-.bg-plate{
-  background-image:
-    repeating-linear-gradient(45deg,  var(--tex) 0 2px, transparent 2px 15px),
-    repeating-linear-gradient(-45deg, var(--tex) 0 2px, transparent 2px 15px);
-  background-size:30px 30px;
-}
-/* Brushed steel */
-.bg-brushed{
-  background-image:repeating-linear-gradient(90deg, var(--tex) 0 1px, transparent 1px 4px);
-  background-size:auto;
-}
-/* Poured concrete — fine tooth, not clouds. stitchTiles removes the seam. */
-.bg-concrete{
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.55 0 0 0 0 0.55 0 0 0 0.13 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23c)'/%3E%3C/svg%3E");
-  background-size:220px 220px;
+body[class*="bg-"]::after{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-color:var(--art-ink);
+  -webkit-mask-image:var(--art);          mask-image:var(--art);
+  -webkit-mask-size:var(--art-size);      mask-size:var(--art-size);
+  -webkit-mask-repeat:repeat;             mask-repeat:repeat;
 }
 
-/* Hazard tape */
-.bg-hazard{
-  background-image:repeating-linear-gradient(45deg, var(--tex) 0 14px, transparent 14px 28px);
-  background-size:auto;
-}
-/* Carbon weave */
-.bg-carbon{
-  background-image:
-    repeating-linear-gradient(45deg,  var(--tex) 0 1px, transparent 1px 7px),
-    repeating-linear-gradient(-45deg, var(--tex) 0 1px, transparent 1px 7px);
-  background-size:14px 14px;
-}
-/* Print halftone */
-.bg-halftone{
-  background-image:radial-gradient(var(--tex) 1.4px, transparent 1.5px);
-  background-size:11px 11px;
-}
-/* Drafting grid */
-.bg-grid{
-  background-image:
-    linear-gradient(var(--tex) 1px, transparent 1px),
-    linear-gradient(90deg, var(--tex) 1px, transparent 1px);
-  background-size:28px 28px;
-}
-/* Floodlight from the rafters — tinted by the palette accent */
-.bg-flood{
-  background-image:radial-gradient(ellipse 120% 65% at 50% -8%,
-    color-mix(in srgb, var(--good) 16%, transparent), transparent 72%);
-  background-repeat:no-repeat;
-  background-attachment:fixed;
-  background-size:auto;
-}
+.bg-iron    { --art:url("art/iron.svg");    --art-size:220px 220px; --art-sm:88px 88px; }
+.bg-chains  { --art:url("art/chains.svg");  --art-size:120px 160px; --art-sm:42px 56px;   }
+.bg-claw    { --art:url("art/claw.svg");    --art-size:260px 260px; --art-sm:62px 62px; }
+.bg-skull   { --art:url("art/skull.svg");   --art-size:240px 240px; --art-sm:50px 50px; }
+.bg-splatter{ --art:url("art/grunge.svg");  --art-size:320px 320px; --art-sm:120px 120px; }
+.bg-scratch { --art:url("art/scratch.svg"); --art-size:300px 300px; --art-sm:120px 120px; }
+.bg-flames  { --art:url("art/flames.svg");  --art-size:200px 200px; --art-sm:54px 54px; }
 
 /* Texture swatches in the picker reuse the exact same rules. */
 .texs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:6px}
@@ -635,7 +601,14 @@ body[class*="bg-"]{ background-repeat:repeat; }
 }
 .tex:active{transform:scale(.97)}
 .tex.on{border-color:var(--good)}
-.tex__patch{display:block;height:40px;background-color:var(--paper);background-attachment:scroll}
+.tex__patch{display:block;height:52px;background-color:var(--paper);position:relative;overflow:hidden}
+.tex__patch[class*="bg-"]::after{
+  content:"";position:absolute;inset:0;
+  background-color:color-mix(in srgb, var(--ink) 30%, transparent);
+  -webkit-mask-image:var(--art);      mask-image:var(--art);
+  -webkit-mask-size:var(--art-sm);    mask-size:var(--art-sm);
+  -webkit-mask-repeat:repeat;         mask-repeat:repeat;
+}
 .tex__name{
   display:block;padding:5px 4px 6px;font-size:9.5px;font-weight:700;
   text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);

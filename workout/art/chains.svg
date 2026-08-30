@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="160" viewBox="0 0 120 160">
+  <g fill="none" stroke="#000" stroke-width="9">
+    <!-- vertical link, split across the tile seam so it repeats cleanly -->
+    <ellipse cx="60" cy="0"   rx="17" ry="30"/>
+    <ellipse cx="60" cy="160" rx="17" ry="30"/>
+    <!-- horizontal link between them -->
+    <ellipse cx="60" cy="53"  rx="30" ry="17"/>
+    <!-- vertical link -->
+    <ellipse cx="60" cy="106" rx="17" ry="30"/>
+  </g>
+</svg>
