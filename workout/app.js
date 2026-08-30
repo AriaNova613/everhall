@@ -88,7 +88,7 @@ const state = {
 const key = (uid, day) => `${uid}|${day}`;
 const getCheckin = (uid, day) => state.checkins.get(key(uid, day));
 const colorVar = c => `var(--${['indigo', 'amber', 'teal', 'rose'].includes(c) ? c : 'indigo'})`;
-const initials = p => (p.display_name || p.email || '?').trim().slice(0, 2).toUpperCase();
+const initials = p => (p.display_name || p.email || '?').trim().charAt(0).toUpperCase();
 
 /* ---------------------------------------------------------------------------
    Skins. The chip colours below are only for the picker preview — the real
@@ -510,24 +510,29 @@ function renderAll() { renderToday(); renderWeek(); renderMonth(); }
 function renderToday() {
   const t = todayISO();
   const mine = getCheckin(state.me.id, t);
-  const others = state.profiles.filter(p => p.id !== state.me.id);
+  const me = state.me;
 
   const tagLine = mine?.tags?.length
     ? mine.tags.map(x => TAG_LABEL[x] || x).join(' · ')
     : '';
 
-  const peers = others.map(p => {
-    const c = getCheckin(p.id, t);
-    const detail = c
-      ? (c.tags?.length ? c.tags.map(x => TAG_LABEL[x] || x).join(' · ') : 'Checked in')
-      : 'No checkmark yet';
+  // Everyone who is not you: profiles first, then allow-listed people who have
+  // not signed in yet — otherwise the card silently omits half the family.
+  const others = [
+    ...state.profiles.filter(p => p.id !== me.id).map(p => ({ p, joined: true })),
+    ...state.pending.map(m => ({ p: m, joined: false })),
+  ];
+
+  const peers = others.map(({ p, joined }) => {
+    const c = joined ? getCheckin(p.id, t) : null;
+    const detail = !joined ? 'Hasn’t joined yet'
+      : c ? (c.tags?.length ? c.tags.map(x => TAG_LABEL[x] || x).join(' · ') : 'Checked in')
+      : 'Not yet';
     return `
-      <div class="peer">
-        <div class="peer__av" style="background:${colorVar(p.color)}">${esc(initials(p))}</div>
-        <div class="peer__txt">
-          <div class="peer__name">${esc(p.display_name)}</div>
-          <div class="peer__state ${c ? 'yes' : ''}">${c ? '✓ ' : ''}${esc(detail)}</div>
-        </div>
+      <div class="peer${joined ? '' : ' peer--out'}">
+        <span class="peer__av" style="background:${colorVar(p.color)}">${esc(initials(p))}</span>
+        <span class="peer__name">${esc(p.display_name)}</span>
+        <span class="peer__state ${c ? 'yes' : ''}">${c ? '✓ ' : ''}${esc(detail)}</span>
       </div>`;
   }).join('');
 
@@ -536,12 +541,23 @@ function renderToday() {
       <div class="today__date">${esc(prettyDate(t))}</div>
       <div class="today__rel">Today</div>
     </div>
+
+    <div class="you">
+      <span class="you__av" style="background:${colorVar(me.color)}">${esc(initials(me))}</span>
+      <span class="you__name">${esc(me.display_name)}</span>
+      <span class="you__tag">You</span>
+    </div>
+
     <button class="bigcheck ${mine ? 'done' : ''}" id="bigCheck">
       ${mine ? ic('check') : ic('plus')}
       <span class="bigcheck__lbl">${mine ? 'Workout logged' : 'Log today’s workout'}</span>
       <span class="bigcheck__hint">${mine ? (tagLine || 'Tap to add what you did') : 'One tap to check off today'}</span>
     </button>
-    ${peers}`;
+
+    ${peers ? `<div class="peers">
+      <p class="eyebrow">Everyone else today</p>
+      ${peers}
+    </div>` : ''}`;
 
   // One tap is the whole point: an unchecked day checks off immediately.
   // Once it's checked, the same button opens the optional detail sheet.
