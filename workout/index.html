@@ -1,803 +1,186 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-CA">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+
+<!-- ---------------------------------------------------------------------------
+     Content-Security-Policy.
+
+     GitHub Pages cannot set response headers, so this meta tag is the only
+     place a policy can live. It has to come before anything it governs, which
+     is why it sits this high.
+
+     Everything the page needs is served from this origin: the fonts are
+     self-hosted, the Supabase client is vendored, and there is not one inline
+     script or style attribute in the whole app. That is what allows
+     `script-src 'self'` with no hash exception — and a hash would have been a
+     trap, because it changes if git so much as rewrites the line endings on
+     the way to the deploy repository, and the failure would appear only in
+     production.
+
+     Two directives are absent on purpose: `frame-ancestors` and `report-uri`
+     are both ignored inside a meta tag, so writing them would only look like
+     protection.
+     --------------------------------------------------------------------------- -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://twfwkcmwvwdnbavrsang.supabase.co wss://twfwkcmwvwdnbavrsang.supabase.co; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests">
+
 <title>Carr Athletics</title>
-<meta name="description" content="A shared workout accountability board.">
-<meta name="theme-color" content="#faf8f4" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#14131a" media="(prefers-color-scheme: dark)">
+<meta name="description" content="One check a day. The family workout board.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+
+<!-- One theme-color tag, mutated in place if it ever needs to change. The old
+     pair of prefers-color-scheme tags was pointless: this app has one theme. -->
+<meta name="theme-color" content="#0B0A09">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Carr Athletics">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Carr">
+<!-- black-translucent is a package deal with viewport-fit=cover: it makes the
+     safe-area insets non-zero, and every sticky or bottom-anchored thing in the
+     stylesheet pads for them. -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-32.png" sizes="32x32" type="image/png">
+<!-- iOS reads this in preference to anything in the manifest. 180 square,
+     opaque, unrounded — iOS applies its own mask. -->
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon-180.png">
+<link rel="stylesheet" href="fonts/fonts.css">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Rye&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-<script>
-  /* Apply the saved skin before first paint, so there is no flash of the
-     default palette on load. */
-  try {
-    var s = localStorage.getItem('checkmark.skin');
-    if (s) document.documentElement.setAttribute('data-skin', s);
-  } catch (e) {}
-</script>
-
-<style>
-/* ===========================================================================
-   Tokens
-   =========================================================================== */
-/* ---------------------------------------------------------------------------
-   Palettes ("skins"). Every skin defines the same token contract, so the rest
-   of the stylesheet never needs to know which one is active.
-
-   --indigo / --amber / --teal / --rose are the PERSON accent slots. Profiles
-   store one of those four names in the database, so a skin just re-points the
-   slot at a colour that fits it — no data migration to change the look.
-   --------------------------------------------------------------------------- */
-:root{
-  /* geometry + type are shared by every skin: plates, not pills */
-  --r-sm:3px; --r-md:4px; --r-lg:6px; --r-xl:10px;
-  --sp:16px;
-  --maxw:1120px;
-  --font:'Barlow Condensed','Arial Narrow',system-ui,-apple-system,sans-serif;
-  --font-display:'Anton','Arial Narrow',Impact,sans-serif;
-  --font-body:ui-sans-serif,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  --grain:.055;
-  --sheen:rgba(255,255,255,.045);
-  --shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 2px 10px rgba(0,0,0,.5);
-  --shadow-lg:0 1px 0 rgba(255,255,255,.05) inset, 0 24px 60px -18px rgba(0,0,0,.85);
-}
-
-/* 1. MUSCLE BEACH — Venice gold on tar black. The default. */
-:root, :root[data-skin="muscle"]{
-  --paper:#0d0b07; --card:#171309;
-  --ink:#f7e9c8; --ink-2:#b9a077; --ink-3:#7d6a4d;
-  --line:#2b2417; --line-2:#41371f;
-  --good:#f0b429; --miss:#2b2417; --danger:#e0533a;
-  --indigo:#f0b429; --amber:#e2603c; --teal:#3f9e8c; --rose:#c76ea0;
-  --theme:#0d0b07;
-}
-
-/* 2. FERAL — black and white, no mercy. */
-:root[data-skin="feral"]{
-  --paper:#080808; --card:#131313;
-  --ink:#ffffff; --ink-2:#a6a6a6; --ink-3:#6c6c6c;
-  --line:#242424; --line-2:#3b3b3b;
-  --good:#ffffff; --miss:#242424; --danger:#d13b3b;
-  --indigo:#ffffff; --amber:#c4c4c4; --teal:#626262; --rose:#8e8e8e;
-  --theme:#080808;
-}
-
-/* 3. BLOOD & IRON — crimson on gunmetal. */
-:root[data-skin="blood"]{
-  --paper:#0d0e10; --card:#16191d;
-  --ink:#e9e7e4; --ink-2:#98a0a8; --ink-3:#697079;
-  --line:#22262b; --line-2:#343a41;
-  --good:#d02b30; --miss:#22262b; --danger:#d02b30;
-  --indigo:#d02b30; --amber:#8b98a4; --teal:#a8794e; --rose:#dfa8b0;
-  --theme:#0d0e10;
-}
-
-/* 4. CHROME — cold polished steel. */
-:root[data-skin="chrome"]{
-  --paper:#0b0d11; --card:#14181e;
-  --ink:#e8eef5; --ink-2:#9db0c2; --ink-3:#68788a;
-  --line:#1f242e; --line-2:#333c49;
-  --good:#7dd3fc; --miss:#1f242e; --danger:#f26d6d;
-  --indigo:#7dd3fc; --amber:#c3ccd6; --teal:#f2b880; --rose:#a5b4fc;
-  --theme:#0b0d11;
-}
-
-/* 5. TOXIC — acid green thrash. */
-:root[data-skin="toxic"]{
-  --paper:#070905; --card:#101408;
-  --ink:#eaf6d9; --ink-2:#9fb583; --ink-3:#66784e;
-  --line:#1a2110; --line-2:#2c3719;
-  --good:#a3e635; --miss:#1a2110; --danger:#f97316;
-  --indigo:#a3e635; --amber:#f97316; --teal:#38bdf8; --rose:#e879a8;
-  --theme:#070905;
-}
-
-/* 6. RUST BELT — oxidised iron on cold concrete. */
-:root[data-skin="rust"]{
-  --paper:#100d0b; --card:#1a1512;
-  --ink:#f1e7de; --ink-2:#b09c8c; --ink-3:#7a6a5d;
-  --line:#2a221c; --line-2:#3e3229;
-  --good:#d4571c; --miss:#2a221c; --danger:#e0533a;
-  --indigo:#d4571c; --amber:#8f9b8e; --teal:#2f8f8f; --rose:#a8567f;
-  --theme:#100d0b;
-}
-
-/* 7. DOOM — violet murk. */
-:root[data-skin="doom"]{
-  --paper:#0a0811; --card:#14101f;
-  --ink:#ece7f5; --ink-2:#a99bc4; --ink-3:#73678b;
-  --line:#211a32; --line-2:#332947;
-  --good:#a855f7; --miss:#211a32; --danger:#f0567f;
-  --indigo:#a855f7; --amber:#22d3ee; --teal:#f472b6; --rose:#a3e635;
-  --theme:#0a0811;
-}
-
-/* 8. CHALK — the light one. Fight-poster newsprint. */
-:root[data-skin="chalk"]{
-  --paper:#e9e7e1; --card:#f7f6f2;
-  --ink:#131210; --ink-2:#4a4740; --ink-3:#837f75;
-  --line:#d5d1c7; --line-2:#b8b3a7;
-  --good:#131210; --miss:#d5d1c7; --danger:#b1341f;
-  --indigo:#131210; --amber:#b1341f; --teal:#2f6b8f; --rose:#8a5a2b;
-  --theme:#e9e7e1;
-  --sheen:rgba(0,0,0,.028);
-  --grain:.04;
-  --shadow:0 1px 2px rgba(19,18,16,.10), 0 6px 18px -10px rgba(19,18,16,.30);
-  --shadow-lg:0 2px 6px rgba(19,18,16,.14), 0 26px 54px -20px rgba(19,18,16,.42);
-}
-
-*,*::before,*::after{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%;background-color:var(--paper)}
-body{
-  margin:0; background-color:transparent; color:var(--ink);
-  font-family:var(--font); font-size:16px; line-height:1.5;
-  -webkit-font-smoothing:antialiased;
-  padding-bottom:env(safe-area-inset-bottom);
-  overscroll-behavior-y:none;
-}
-button{font:inherit;color:inherit;cursor:pointer}
-input,textarea{font:inherit;color:inherit}
-h1,h2,h3{margin:0;line-height:1.2}
-[hidden]{display:none !important}
-
-.wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--sp)}
-.eyebrow{
-  font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
-  color:var(--ink-3);margin:0 0 10px;
-}
-.card{
-  background:color-mix(in srgb, var(--card) 93%, transparent);border:1px solid var(--line);
-  border-radius:var(--r-lg);box-shadow:var(--shadow);
-}
-
-/* ===========================================================================
-   App bar
-   =========================================================================== */
-.appbar{
-  position:sticky;top:0;z-index:30;
-  background:color-mix(in srgb, var(--paper) 88%, transparent);
-  backdrop-filter:saturate(1.6) blur(12px);
-  -webkit-backdrop-filter:saturate(1.6) blur(12px);
-  border-bottom:1px solid var(--line);
-  padding-top:env(safe-area-inset-top);
-}
-.appbar__in{
-  max-width:var(--maxw);margin:0 auto;padding:10px var(--sp);
-  display:flex;align-items:center;gap:12px;
-}
-.brand{display:flex;align-items:center;min-width:0}
-.brandmark{height:26px;width:auto;max-width:200px;color:var(--good);display:block}
-@media (max-width:430px){ .brandmark{height:23px;max-width:168px} }
-.gate__lockup{width:100%;max-width:250px;color:var(--good);display:block;margin:0 auto 22px}
-.spacer{flex:1}
-.iconbtn{
-  display:inline-flex;align-items:center;justify-content:center;gap:7px;
-  min-height:38px;padding:0 13px;border-radius:var(--r-sm);
-  background:transparent;border:1px solid var(--line-2);
-  font-size:13px;font-weight:600;color:var(--ink-2);
-  transition:background .15s, color .15s, border-color .15s;
-}
-.iconbtn:hover{background:var(--card);color:var(--ink)}
-.iconbtn svg{width:15px;height:15px}
-.live{
-  display:inline-flex;align-items:center;gap:6px;
-  font-size:11px;font-weight:600;color:var(--ink-3);letter-spacing:.04em;
-}
-.live .dot{width:6px;height:6px;border-radius:50%;background:var(--miss);transition:background .3s}
-.live.on .dot{background:var(--good);box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 22%,transparent)}
-@media (max-width:560px){ .live span{display:none} #skinBtn span,#signOut span{display:none} }
-
-/* ===========================================================================
-   Gate (sign-in / setup)
-   =========================================================================== */
-.gate{min-height:100svh;display:grid;place-items:center;padding:24px}
-.gate__card{width:100%;max-width:430px;padding:30px}
-.gate__mark{
-  width:52px;height:52px;border-radius:15px;display:grid;place-items:center;
-  background:var(--good);color:var(--paper);margin-bottom:18px;
-}
-.gate__mark svg{width:30px;height:30px}
-.gate h1{font-size:26px;letter-spacing:-.03em;margin-bottom:7px}
-.gate p.sub{color:var(--ink-2);font-size:14.5px;margin:0 0 24px}
-.field{
-  width:100%;padding:13px 15px;border-radius:var(--r-md);
-  border:1px solid var(--line-2);background:var(--paper);
-  outline:none;transition:border-color .15s, box-shadow .15s;
-}
-.field:focus{border-color:var(--good);box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 18%,transparent)}
-.btn{
-  width:100%;min-height:48px;border-radius:var(--r-md);border:1px solid transparent;
-  background:var(--ink);color:var(--paper);font-weight:650;font-size:15px;
-  display:inline-flex;align-items:center;justify-content:center;gap:9px;
-  transition:opacity .15s, transform .06s;
-}
-.btn:hover{opacity:.9}
-.btn:active{transform:translateY(1px)}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.btn--ghost{background:var(--card);color:var(--ink);border-color:var(--line-2)}
-.btn--google{background:#fff;color:#1f1f1f;border-color:#dadce0}
-@media (prefers-color-scheme:dark){ .btn--google{background:#1e1c26;color:#f2eff5;border-color:var(--line-2)} }
-.btn--google svg{width:18px;height:18px}
-.stack>*+*{margin-top:11px}
-.or{display:flex;align-items:center;gap:12px;color:var(--ink-3);font-size:12px;margin:20px 0}
-.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
-.msg{
-  margin-top:16px;padding:11px 13px;border-radius:var(--r-md);font-size:13.5px;
-  border:1px solid var(--line);background:var(--paper);color:var(--ink-2);
-}
-.msg--err{border-color:color-mix(in srgb,var(--danger) 40%,var(--line));color:var(--danger);background:color-mix(in srgb,var(--danger) 7%,var(--paper))}
-.msg--ok{border-color:color-mix(in srgb,var(--good) 40%,var(--line));color:var(--good);background:color-mix(in srgb,var(--good) 7%,var(--paper))}
-.gate code{
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
-  background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:1px 5px;
-}
-.gate ol{margin:0;padding-left:20px;font-size:14px;color:var(--ink-2)}
-.gate ol li{margin-bottom:9px}
-.otp{letter-spacing:.5em;text-align:center;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
-
-/* spinner */
-.spin{width:19px;height:19px;border-radius:50%;border:2.5px solid currentColor;border-top-color:transparent;animation:spin .7s linear infinite;display:inline-block}
-@keyframes spin{to{transform:rotate(360deg)}}
-.center-spin{min-height:100svh;display:grid;place-items:center;color:var(--ink-3)}
-
-/* ===========================================================================
-   Today
-   =========================================================================== */
-main{padding:22px 0 60px}
-section{margin-bottom:30px}
-
-/* Renamed from .today: that collided with the .today STATE class on day
-   tiles, which then inherited this padding and burst out of its grid track. */
-.todaycard{padding:20px;display:grid;gap:16px}
-.today__head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.today__date{font-size:19px;font-weight:750;letter-spacing:-.02em}
-.today__rel{font-size:13px;color:var(--ink-3)}
-
-.bigcheck{
-  position:relative;width:100%;min-height:132px;
-  border-radius:var(--r-lg);border:2px solid var(--line-2);
-  background:linear-gradient(180deg, color-mix(in srgb,var(--ink) 7%, var(--card)), var(--card));
-  box-shadow:0 4px 0 var(--line-2), 0 12px 22px -10px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.10);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;
-  color:var(--ink-2);font-weight:700;font-size:15px;
-  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
-  transition:transform .09s ease, box-shadow .09s ease, border-color .18s, color .18s;
-}
-.bigcheck:hover{border-color:var(--good);color:var(--good)}
-/* Physical press: the button actually travels down onto its own shadow. */
-.bigcheck:active{
-  transform:translateY(4px);
-  box-shadow:0 0 0 var(--line-2), 0 4px 10px -6px rgba(0,0,0,.5), inset 0 2px 5px rgba(0,0,0,.28);
-}
-.bigcheck svg{width:36px;height:36px}
-.bigcheck.done{
-  border-color:transparent;color:var(--good);
-  background:linear-gradient(180deg, color-mix(in srgb,var(--good) 20%,var(--card)), color-mix(in srgb,var(--good) 8%,var(--card)));
-  box-shadow:0 4px 0 color-mix(in srgb,var(--good) 45%,var(--card)),
-             0 12px 24px -10px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.16);
-}
-.bigcheck.done svg{width:46px;height:46px}
-.bigcheck.done .bigcheck__lbl{font-size:20px;text-transform:uppercase;letter-spacing:.04em}
-/* ---------------------------------------------------------------------------
-   The invitation. Only while the day is UNLOGGED — once it is checked off all
-   of this switches itself off, which is what stops it becoming wallpaper.
-   --------------------------------------------------------------------------- */
-.bigcheck:not(.done){
-  border-color:color-mix(in srgb, var(--good) 42%, var(--line-2));
-  color:var(--ink);
-  background:
-    radial-gradient(125% 95% at 50% 0%, color-mix(in srgb,var(--good) 10%, transparent), transparent 68%),
-    linear-gradient(180deg, color-mix(in srgb,var(--ink) 7%, var(--card)), var(--card));
-  box-shadow:
-    0 4px 0 var(--line-2),
-    0 12px 22px -10px rgba(0,0,0,.55),
-    0 0 28px -8px color-mix(in srgb,var(--good) 34%, transparent),
-    inset 0 1px 0 rgba(255,255,255,.10);
-}
-.bigcheck:not(.done) svg{color:var(--good);animation:nudge 3.4s ease-in-out infinite}
-.bigcheck:not(.done) .bigcheck__lbl{color:var(--good)}
-
-/* A slow ring that swells out of the edge and fades. 3.4s and low opacity:
-   it reads in peripheral vision without demanding you look at it. */
-.bigcheck:not(.done)::before{
-  content:"";position:absolute;inset:-2px;border-radius:inherit;
-  border:2px solid var(--good);pointer-events:none;
-  opacity:0;animation:invite 3.4s ease-in-out infinite;
-}
-@keyframes invite{
-  0%   {opacity:0;   transform:scale(1)}
-  32%  {opacity:.32; transform:scale(1)}
-  100% {opacity:0;   transform:scale(1.04)}
-}
-@keyframes nudge{
-  0%,100%{transform:scale(1)}
-  32%    {transform:scale(1.1)}
-}
-/* Reduced motion keeps the invitation, just holds it still. */
-@media (prefers-reduced-motion:reduce){
-  .bigcheck:not(.done)::before{animation:none;opacity:.28}
-  .bigcheck:not(.done) svg{animation:none}
-}
-
-.bigcheck__hint{font-size:12px;font-weight:500;color:var(--ink-3)}
-
-/* You, stated plainly above your own button. */
-.you{display:flex;align-items:center;gap:10px;margin-bottom:-2px}
-.you__av{
-  width:34px;height:34px;border-radius:var(--r-sm);flex:none;display:grid;place-items:center;
-  font-family:var(--font-display);font-size:17px;color:var(--paper);
-}
-.you__name{
-  font-family:var(--font-display);font-size:19px;letter-spacing:.03em;
-  text-transform:uppercase;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-}
-.you__tag{
-  font-size:10px;font-weight:750;letter-spacing:.14em;text-transform:uppercase;
-  padding:3px 8px;border-radius:var(--r-sm);color:var(--paper);background:var(--ink-2);flex:none;
-}
-
-/* Everyone else: same information, deliberately quieter. */
-.peers{margin-top:4px;padding-top:14px;border-top:1px dashed var(--line-2)}
-.peers .eyebrow{margin-bottom:9px}
-.peer{
-  display:flex;align-items:center;gap:9px;padding:7px 0;
-  font-size:14px;line-height:1.3;
-}
-.peer__av{
-  width:22px;height:22px;border-radius:3px;flex:none;display:grid;place-items:center;
-  font-size:11px;font-weight:750;color:var(--paper);
-}
-.peer__name{font-weight:700;flex:none}
-.peer__state{
-  color:var(--ink-3);font-size:13px;margin-left:auto;text-align:right;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;
-}
-.peer__state.yes{color:var(--good);font-weight:600}
-.peer--out{opacity:.5}
-
-/* celebration */
-@keyframes stamp{
-  0%{transform:scale(.5) rotate(-9deg);opacity:0}
-  45%{transform:scale(1.16) rotate(3deg);opacity:1}
-  70%{transform:scale(.96) rotate(-1deg)}
-  100%{transform:scale(1) rotate(0);opacity:1}
-}
-.bigcheck.pop svg{animation:stamp .52s cubic-bezier(.2,.8,.3,1.3)}
-
-@keyframes ring{0%{transform:scale(.6);opacity:.55}100%{transform:scale(1.9);opacity:0}}
-.bigcheck.pop::after{
-  content:"";position:absolute;left:50%;top:50%;width:120px;height:120px;margin:-60px 0 0 -60px;
-  border-radius:50%;border:3px solid var(--good);pointer-events:none;
-  animation:ring .6s cubic-bezier(.2,.7,.3,1) forwards;
-}
-
-.burst{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
-.burst i{
-  position:absolute;width:9px;height:9px;border-radius:2px;background:var(--good);
-  animation:spark .72s cubic-bezier(.15,.75,.3,1) forwards;
-}
-/* Opacity gets its own keyframes: sharing the movement easing made the sparks
-   ~96% faded barely halfway through the arc, so the burst was never really seen. */
-@keyframes spark{
-  0%  {transform:translate(0,0) rotate(0deg) scale(.35);opacity:0}
-  14% {opacity:1}
-  72% {opacity:1}
-  100%{transform:translate(var(--dx),var(--dy)) rotate(var(--r)) scale(.95);opacity:0}
-}
-@media (prefers-reduced-motion:reduce){
-  .bigcheck.pop svg,.bigcheck.pop::after,.burst i{animation:none}
-  .burst{display:none}
-}
-
-/* ===========================================================================
-   Week strip
-   =========================================================================== */
-.weekgrid{display:grid;gap:12px;padding:18px 20px;max-width:660px;margin:0 auto;width:100%}
-.weekrow{display:grid;grid-template-columns:76px minmax(0,1fr) 40px;align-items:center;gap:11px}
-.weekrow__count{
-  text-align:right;font-size:14px;font-weight:750;font-variant-numeric:tabular-nums;
-  letter-spacing:-.02em;
-}
-.weekrow__count span{font-size:11px;font-weight:600;color:var(--ink-3)}
-@media (max-width:400px){ .weekrow{grid-template-columns:56px minmax(0,1fr) 34px;gap:7px} }
-.weekrow__name{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:7px;min-width:0}
-.weekrow__name .swatch{width:9px;height:9px;border-radius:3px;flex:none}
-.weekrow__name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.weekdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;min-width:0}
-.wd{
-  aspect-ratio:1;min-width:0;border-radius:3px;display:grid;place-items:center;position:relative;
-  background:var(--paper);border:1px solid var(--line);
-}
-.wd svg{width:17px;height:17px}
-.wd.on{border-color:transparent}
-.wd.future{opacity:.35}
-.wd.today{box-shadow:inset 0 0 0 2px var(--ink-3)}
-.wd.today.on{box-shadow:inset 0 0 0 2px var(--paper)}
-.weekhdr{display:grid;grid-template-columns:76px minmax(0,1fr) 40px;gap:11px}
-@media (max-width:400px){ .weekhdr{grid-template-columns:56px minmax(0,1fr) 34px;gap:7px} }
-.weekhdr__labels{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;min-width:0}
-.weekhdr__labels span{text-align:center;font-size:10.5px;font-weight:700;color:var(--ink-3);letter-spacing:.06em}
-
-/* ===========================================================================
-   Month
-   =========================================================================== */
-.monthbar{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:16px}
-.monthbar__label{font-size:17px;font-weight:750;letter-spacing:-.02em;min-width:172px;text-align:center;font-variant-numeric:tabular-nums}
-.navbtn{
-  width:38px;height:38px;border-radius:50%;border:1px solid var(--line-2);
-  background:var(--card);display:grid;place-items:center;color:var(--ink-2);
-  transition:background .15s,color .15s;
-}
-.navbtn:hover:not(:disabled){background:var(--paper);color:var(--ink)}
-.navbtn:disabled{opacity:.3;cursor:not-allowed}
-.navbtn svg{width:16px;height:16px}
-
-.boards{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(298px,1fr))}
-
-.board{padding:18px;display:flex;flex-direction:column;min-width:0}
-.board__head{display:flex;align-items:center;gap:11px;margin-bottom:16px}
-.board__av{width:36px;height:36px;border-radius:var(--r-sm);display:grid;place-items:center;font-size:13px;font-weight:750;color:var(--paper);flex:none}
-.board__id{flex:1;min-width:0}
-.board__name{font-size:16px;font-weight:750;letter-spacing:-.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.board__sub{font-size:12px;color:var(--ink-3)}
-.board__you{
-  font-size:10px;font-weight:750;letter-spacing:.08em;text-transform:uppercase;
-  padding:3px 7px;border-radius:5px;background:var(--paper);border:1px solid var(--line-2);color:var(--ink-3);
-}
-
-.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
-.stat{padding:10px 6px;border-radius:var(--r-md);background:var(--paper);border:1px solid var(--line);text-align:center}
-.stat__n{font-size:20px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.15}
-.stat__l{font-size:10px;font-weight:650;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);margin-top:2px}
-
-.dow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-bottom:6px}
-.dow span{text-align:center;font-size:10.5px;font-weight:700;color:var(--ink-3);letter-spacing:.05em}
-.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
-.cell{
-  aspect-ratio:1;min-width:0;border-radius:3px;position:relative;
-  background:var(--paper);border:1px solid var(--line);
-  display:flex;align-items:center;justify-content:center;
-  font-size:12.5px;font-weight:600;color:var(--ink-3);
-  padding:0;transition:transform .08s, border-color .15s, background .15s;
-}
-.cell.blank{background:transparent;border-color:transparent;pointer-events:none}
-.cell.future{opacity:.32;pointer-events:none}
-.cell.editable{cursor:pointer}
-.cell.editable:hover{border-color:var(--ink-3)}
-.cell.editable:active{transform:scale(.93)}
-.cell.readonly{cursor:default}
-.cell.today{box-shadow:inset 0 0 0 2px var(--ink-3)}
-.cell.today.on{box-shadow:inset 0 0 0 2px rgba(255,255,255,.65)}
-.cell.on{border-color:transparent;color:var(--paper)}
-.cell.on .cell__num{opacity:.82;font-size:10px;position:absolute;top:3px;left:5px;font-weight:700}
-.cell__check{width:60%;height:60%}
-.cell__tagdot{
-  position:absolute;bottom:4px;left:50%;transform:translateX(-50%);
-  width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.75;
-}
-.cell.on .cell__tagdot{background:var(--paper)}
-
-.board--pending{opacity:.7;border-style:dashed}
-.pending__note{
-  padding:22px 14px;border-radius:var(--r-md);background:var(--paper);
-  border:1px dashed var(--line-2);text-align:center;
-  font-size:13px;color:var(--ink-3);line-height:1.5;
-}
-.board__rule{
-  margin-top:16px;padding-top:14px;border-top:1px dashed var(--line-2);
-  font-size:13px;color:var(--ink-2);
-}
-.board__rule .eyebrow{margin-bottom:5px}
-.board__rule p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
-.board__rule .empty{color:var(--ink-3);font-style:italic}
-.linkbtn{background:none;border:0;padding:0;color:var(--good);font-weight:650;font-size:12.5px;text-decoration:underline;text-underline-offset:2px}
-
-/* ===========================================================================
-   Sheet (modal)
-   =========================================================================== */
-.scrim{
-  position:fixed;inset:0;z-index:50;background:rgba(20,17,26,.5);
-  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
-  display:flex;align-items:flex-end;justify-content:center;
-  animation:fade .2s ease;
-}
-@media (min-width:700px){ .scrim{align-items:center} }
-@keyframes fade{from{opacity:0}to{opacity:1}}
-@keyframes rise{from{transform:translateY(22px);opacity:0}to{transform:translateY(0);opacity:1}}
-.sheet{
-  width:100%;max-width:560px;max-height:90svh;overflow-y:auto;overscroll-behavior:contain;
-  background:var(--card);border:1px solid var(--line);
-  border-radius:var(--r-xl) var(--r-xl) 0 0;
-  box-shadow:var(--shadow-lg);animation:rise .24s cubic-bezier(.2,.8,.3,1);
-  padding:22px 20px calc(22px + env(safe-area-inset-bottom));
-}
-@media (min-width:700px){ .sheet{border-radius:var(--r-xl)} }
-.sheet__grip{width:38px;height:4px;border-radius:99px;background:var(--line-2);margin:0 auto 16px}
-@media (min-width:700px){ .sheet__grip{display:none} }
-.sheet__head{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
-.sheet__title{font-size:18px;font-weight:750;letter-spacing:-.02em}
-.sheet__sub{font-size:13px;color:var(--ink-3)}
-.closebtn{
-  width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--paper);
-  display:grid;place-items:center;color:var(--ink-2);flex:none;
-}
-.closebtn svg{width:14px;height:14px}
-
-.taggroup{margin-bottom:16px}
-.tags{display:flex;flex-wrap:wrap;gap:7px}
-.tag{
-  padding:8px 13px;border-radius:var(--r-sm);border:1px solid var(--line-2);
-  background:var(--paper);font-size:13.5px;font-weight:600;color:var(--ink-2);
-  transition:all .14s;
-}
-.tag:hover{border-color:var(--ink-3)}
-.tag.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
-.tag[disabled]{opacity:.4;cursor:not-allowed}
-
-.sheet__actions{display:flex;gap:10px;margin-top:22px}
-.sheet__actions .btn{flex:1}
-.btn--danger{background:transparent;color:var(--danger);border-color:color-mix(in srgb,var(--danger) 35%,var(--line));flex:0 0 auto;padding:0 16px}
-
-.roview{padding:14px 16px;border-radius:var(--r-md);background:var(--paper);border:1px solid var(--line)}
-.roview .eyebrow{margin-bottom:8px}
-.chiplist{display:flex;flex-wrap:wrap;gap:6px}
-.chip{padding:5px 11px;border-radius:var(--r-sm);background:var(--card);border:1px solid var(--line-2);font-size:12.5px;font-weight:600}
-.note{margin-top:12px;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
-
-.toast{
-  position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);
-  z-index:80;padding:11px 18px;border-radius:var(--r-md);
-  background:var(--ink);color:var(--paper);font-size:13.5px;font-weight:600;
-  box-shadow:var(--shadow-lg);animation:rise .2s ease;max-width:calc(100vw - 32px);
-}
-.toast.err{background:var(--danger);color:#fff}
-
-.footnote{text-align:center;font-size:12px;color:var(--ink-3);padding:10px 0 4px}
-.footnote button{background:none;border:0;color:var(--ink-3);text-decoration:underline;text-underline-offset:2px;padding:0;font-size:12px}
-
-/* ===========================================================================
-   GRIT LAYER — texture, display type, stamped-metal surfaces.
-   Appended last so it wins the cascade over the base rules above.
-   =========================================================================== */
-
-/* Film grain over everything. Non-interactive, so it never eats a tap. */
-body::before{
-  content:"";position:fixed;inset:0;z-index:9999;pointer-events:none;
-  opacity:var(--grain);
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-/* Display face for anything that should read like a gym poster. */
-.brand span,
-.gate h1,
-.sheet__title,
-.today__date,
-.board__name,
-.monthbar__label,
-.stat__n,
-.bigcheck__lbl,
-.weekrow__count,
-.toast{
-  font-family:var(--font-display);
-  font-weight:400;
-  letter-spacing:.01em;
-}
-.brand span{text-transform:uppercase;letter-spacing:.06em;font-size:19px}
-.gate h1{text-transform:uppercase;letter-spacing:.02em;font-size:30px}
-.today__date{text-transform:uppercase;font-size:21px;letter-spacing:.02em}
-.board__name{text-transform:uppercase;font-size:18px;letter-spacing:.03em}
-.monthbar__label{text-transform:uppercase;font-size:19px;letter-spacing:.05em}
-.stat__n{font-size:26px}
-.sheet__title{text-transform:uppercase;font-size:20px;letter-spacing:.02em}
-.bigcheck.done .bigcheck__lbl{font-size:20px;text-transform:uppercase;letter-spacing:.04em}
-
-/* Labels get the stencil treatment. */
-.eyebrow,.stat__l,.board__you{letter-spacing:.16em;font-weight:600}
-.btn,.iconbtn,.tag,.navbtn{text-transform:uppercase;letter-spacing:.07em;font-weight:600}
-.btn{font-weight:700}
-
-/* Prose stays in a readable face — condensed type is for labels, not paragraphs. */
-.note,.board__rule p,.roview p,.gate p.sub,.msg,.pending__note,.peer__state{
-  font-family:var(--font-body);letter-spacing:0;
-}
-
-/* Brushed sheen on every panel. */
-.card,.sheet{
-  background-image:linear-gradient(180deg,var(--sheen),transparent 42%);
-  border-width:1px;
-}
-
-/* Stamped plates: a checked day should feel struck, not filled. */
-.cell.on,.wd.on{
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.30), inset 0 -2px 4px rgba(0,0,0,.30);
-}
-.cell.on .cell__check,.wd.on svg{filter:drop-shadow(0 1px 1px rgba(0,0,0,.45))}
-.cell{font-weight:600}
-
-/* Today: a hazard-tape edge rather than a soft ring. */
-.cell.today:not(.on){
-  box-shadow:inset 0 0 0 2px var(--ink-2);
-}
-.cell.today.on{box-shadow:inset 0 0 0 2px var(--paper), inset 0 -2px 4px rgba(0,0,0,.3)}
-
-/* The main action reads as a struck steel plate. */
-.bigcheck{border-width:2px}
-.bigcheck.done{
-  background-image:linear-gradient(180deg,rgba(255,255,255,.07),transparent 55%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.18), 0 2px 12px rgba(0,0,0,.4);
-}
-
-/* App bar: a machined edge under it. */
-.appbar{border-bottom-width:2px}
-
-/* ===========================================================================
-   Skin picker
-   =========================================================================== */
-.skins{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-@media (min-width:520px){ .skins{grid-template-columns:repeat(3,minmax(0,1fr))} }
-.skin{
-  padding:0;border:2px solid var(--line-2);border-radius:var(--r-md);
-  overflow:hidden;text-align:left;display:block;width:100%;
-  transition:border-color .15s, transform .08s;
-}
-.skin:hover{border-color:var(--ink-3)}
-.skin:active{transform:scale(.98)}
-.skin.on{border-color:var(--good)}
-.skin__swatch{height:44px;display:flex;align-items:center;gap:6px;padding:0 11px}
-.skin__chip{width:15px;height:15px;border-radius:2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
-.skin__tick{margin-left:auto;width:15px;height:15px;opacity:0}
-.skin.on .skin__tick{opacity:1}
-.skin__name{
-  padding:7px 11px 10px;font-size:12px;font-weight:700;
-  text-transform:uppercase;letter-spacing:.11em;
-  border-top:1px solid currentColor;
-}
-.skin__note{display:block;font-size:10.5px;font-weight:500;letter-spacing:.04em;text-transform:none;opacity:.62;margin-top:1px}
-
-
-/* ===========================================================================
-   ARTWORK — real drawn graphics (web/art/*.svg), not gradients.
-
-   Each is applied as a CSS *mask* over a flat fill, so the artwork takes the
-   palette's own colour instead of shipping one recoloured copy per palette.
-   The layer sits at z-index:-1, behind the content but above the page colour,
-   which is why --paper lives on <html> above.
-   =========================================================================== */
-:root{ --art-ink:color-mix(in srgb, var(--ink) 7%, transparent); }
-
-body[class*="bg-"]::after{
-  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
-  background-color:var(--art-ink);
-  -webkit-mask-image:var(--art);          mask-image:var(--art);
-  -webkit-mask-size:var(--art-size);      mask-size:var(--art-size);
-  -webkit-mask-repeat:repeat;             mask-repeat:repeat;
-}
-
-.bg-iron    { --art:url("art/iron.svg");    --art-size:220px 220px; --art-sm:88px 88px; }
-.bg-chains  { --art:url("art/chains.svg");  --art-size:120px 160px; --art-sm:42px 56px;   }
-.bg-claw    { --art:url("art/claw.svg");    --art-size:260px 260px; --art-sm:62px 62px; }
-.bg-skull   { --art:url("art/skull.svg");   --art-size:240px 240px; --art-sm:50px 50px; }
-.bg-splatter{ --art:url("art/grunge.svg");  --art-size:320px 320px; --art-sm:120px 120px; }
-.bg-scratch { --art:url("art/scratch.svg"); --art-size:300px 300px; --art-sm:120px 120px; }
-.bg-flames  { --art:url("art/flames.svg");  --art-size:200px 200px; --art-sm:54px 54px; }
-
-/* Texture swatches in the picker reuse the exact same rules. */
-
-</style>
+<link rel="stylesheet" href="app.css">
+<script src="boot.js"></script>
 </head>
 <body>
 
-<!-- shared icon defs -->
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
-  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
-  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
-  <symbol id="i-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></symbol>
-  <symbol id="i-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
-  <symbol id="i-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
-  <symbol id="i-skin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></symbol>
-  <symbol id="i-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/></symbol>
+<!-- One sprite of 24x24 line icons. Every one is fill:none/stroke:currentColor,
+     so an icon takes the colour of whatever it sits in. -->
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <defs>
+    <g id="g-stroke" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></g>
+  </defs>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.9 19.3a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.7 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+  <symbol id="i-flat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="2.8"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-install" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5M4 20h16"/></symbol>
+  <symbol id="i-ios-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8.5 6.5 12 3l3.5 3.5"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></symbol>
+  <symbol id="i-ios-add" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><path d="M12 8v8M8 12h8"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.4v.1"/></symbol>
+  <symbol id="i-offline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M8.6 15.6a4.8 4.8 0 0 1 6.8 0"/><path d="M5.4 12.4a9.3 9.3 0 0 1 4-2.4M18.6 12.4a9.3 9.3 0 0 0-3.1-2.2"/><path d="M2.2 9.2A14 14 0 0 1 7 6.3M21.8 9.2a14 14 0 0 0-8.7-3.2"/><path d="M12 19v.1"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8.5 10.5 12 8l3.5 2.5"/><path d="M7 15h10"/></symbol>
 </svg>
 
-<!-- ==========================================================
-     Boot / loading
-     ========================================================== -->
-<div id="boot" class="center-spin"><span class="spin"></span></div>
+<a class="skip" href="#main">Skip to the board</a>
 
-<!-- ==========================================================
-     Gate — setup, sign-in, or auth-in-progress
-     ========================================================== -->
-<div id="gate" class="gate" hidden>
-  <div class="gate__card card">
-    <svg class="gate__lockup" viewBox="0 0 200 152" role="img" aria-label="Carr Athletics">
-      <text x="100" y="52" text-anchor="middle" font-family="Rye,serif" font-size="52" fill="currentColor">CARR</text>
-      <g fill="currentColor">
-        <path d="M46,86 Q100,99 154,86" fill="none" stroke="currentColor" stroke-width="11"/>
-        <rect x="39" y="66" width="14" height="40" rx="3" transform="rotate(13 46 86)"/>
-        <rect x="147" y="66" width="14" height="40" rx="3" transform="rotate(-13 154 86)"/>
-        <rect x="28.5" y="71" width="9" height="24" rx="3" transform="rotate(13 33 83)"/>
-        <rect x="162.5" y="71" width="9" height="24" rx="3" transform="rotate(-13 167 83)"/>
-      </g>
-      <defs><path id="athArc" fill="none" d="M32,118 Q100,140 168,118"/></defs>
-      <text font-family="'Barlow Condensed',sans-serif" font-weight="600" font-size="16"
-            letter-spacing="7" fill="currentColor">
-        <textPath href="#athArc" startOffset="50%" text-anchor="middle">ATHLETICS</textPath></text>
-    </svg>
+<!-- Boot: replaced by boot.js with a real message if start-up fails. -->
+<div id="boot"><span class="spin" role="status" aria-label="Loading"></span></div>
+
+<!-- Gate: sign in, setup, or no access. -->
+<div id="gate" class="gatewrap" hidden>
+  <div class="gate">
+    <div class="gate__mark">
+      <div class="gate__c">CARR</div>
+      <div class="gate__r"></div>
+      <div class="gate__a">Athletics</div>
+    </div>
     <div id="gateBody"></div>
   </div>
 </div>
 
-<!-- ==========================================================
-     App
-     ========================================================== -->
+<!-- The app. -->
 <div id="app" hidden>
-  <header class="appbar">
-    <div class="appbar__in">
-      <div class="brand">
-        <svg class="brandmark" viewBox="0 0 214 30" role="img" aria-label="Carr Athletics">
-          <g fill="currentColor">
-            <path d="M10,14 Q27,20 44,14" fill="none" stroke="currentColor" stroke-width="5"/>
-            <rect x="6" y="6" width="7" height="17" rx="2" transform="rotate(19 9.5 14.5)"/>
-            <rect x="41" y="6" width="7" height="17" rx="2" transform="rotate(-19 44.5 14.5)"/>
-          </g>
-          <text x="56" y="23" font-family="Rye,serif" font-size="21" fill="currentColor">CARR</text>
-          <text x="128" y="22" font-family="'Barlow Condensed',sans-serif" font-weight="600"
-                font-size="11" letter-spacing="3.2" fill="currentColor">ATHLETICS</text>
-        </svg>
+  <header class="bar">
+    <div class="bar__in">
+      <h1 class="mark">
+        <span class="mark__c">Carr</span>
+        <span class="mark__bar" aria-hidden="true"></span>
+        <span class="mark__a">Athletics</span>
+      </h1>
+      <span class="grow"></span>
+      <div class="live" id="live" data-state="off">
+        <span class="live__dot" aria-hidden="true"></span>
+        <span class="live__t" id="liveText">Offline</span>
       </div>
-      <div class="spacer"></div>
-      <div class="live" id="live" title="Live sync"><span class="dot"></span><span>Live</span></div>
-      <button class="iconbtn" id="skinBtn" title="Change the look"><svg><use href="#i-skin"/></svg><span>Look</span></button>
-      <button class="iconbtn" id="signOut"><svg><use href="#i-out"/></svg><span>Sign out</span></button>
+      <button class="ibtn" id="settingsBtn" type="button" aria-label="Settings">
+        <svg aria-hidden="true" focusable="false"><use href="#i-gear"/></svg>
+      </button>
     </div>
   </header>
 
-  <main class="wrap">
+  <main class="page" id="main">
+    <div id="bannerRoot"></div>
 
-    <section id="todaySec">
-      <p class="eyebrow">Today</p>
-      <div class="todaycard card" id="todayCard"></div>
+    <section class="sec sec--today" aria-labelledby="hdToday">
+      <div class="sec__hd"><h2 class="cap" id="hdToday">Today</h2></div>
+      <div class="panel today" id="todayCard"></div>
     </section>
 
-    <section id="weekSec">
-      <p class="eyebrow">This week</p>
-      <div class="card" id="weekCard"></div>
-    </section>
-
-    <section id="monthSec">
-      <div class="monthbar">
-        <button class="navbtn" id="prevM" aria-label="Previous month"><svg><use href="#i-left"/></svg></button>
-        <div class="monthbar__label" id="monthLabel"></div>
-        <button class="navbtn" id="nextM" aria-label="Next month"><svg><use href="#i-right"/></svg></button>
+    <section class="sec sec--family" aria-labelledby="hdFamily">
+      <div class="sec__hd">
+        <h2 class="cap" id="hdFamily">The family &middot; today</h2>
+        <span class="cap" id="familyCount"></span>
       </div>
-      <div class="boards" id="boards"></div>
+      <div class="panel roster" id="familyCard"></div>
     </section>
 
-    <p class="footnote">
-      One check a day. <button id="aboutBtn">What is this?</button>
-    </p>
+    <section class="sec sec--week" aria-labelledby="hdWeek">
+      <div class="sec__hd">
+        <h2 class="cap" id="hdWeek">This week</h2>
+        <span class="cap" id="weekRange"></span>
+      </div>
+      <div class="panel week" id="weekCard"></div>
+    </section>
+
+    <section class="sec sec--month" aria-labelledby="hdMonth">
+      <h2 class="sr" id="hdMonth">Every month, person by person</h2>
+      <div class="monthbar">
+        <button class="navb" id="prevM" type="button" aria-label="Previous month">
+          <svg aria-hidden="true" focusable="false"><use href="#i-left"/></svg>
+        </button>
+        <div class="monthbar__l" id="monthLabel"></div>
+        <button class="navb" id="nextM" type="button" aria-label="Next month">
+          <svg aria-hidden="true" focusable="false"><use href="#i-right"/></svg>
+        </button>
+      </div>
+      <div class="rail" id="rail">
+        <div class="rail__in" id="railIn" role="tablist" aria-label="Whose board to show"></div>
+        <span class="rail__ink" id="railInk" aria-hidden="true"></span>
+      </div>
+      <div class="plates" id="plates"></div>
+      <div class="index" id="indexList"></div>
+    </section>
+
+    <section class="sec sec--weight" aria-labelledby="hdWeight">
+      <div class="sec__hd"><h2 class="cap" id="hdWeight">Weight</h2></div>
+      <div class="panel weight" id="weightCard"></div>
+    </section>
+
+    <section class="sec sec--install" id="installSec" hidden aria-labelledby="hdInstall">
+      <h2 class="sr" id="hdInstall">Add this to your home screen</h2>
+      <div class="install" id="installCard"></div>
+    </section>
   </main>
 </div>
 
-<div id="modalRoot"></div>
-<div id="toastRoot"></div>
+<div id="sheetRoot"></div>
+<div id="toastRoot" role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="alertRoot" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
 <script src="config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"
-        crossorigin="anonymous"
-        onerror="window.__sbFailed=true"></script>
+<script src="vendor/supabase.js"></script>
 <script src="app.js" type="module"></script>
 </body>
 </html>
