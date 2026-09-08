@@ -384,27 +384,32 @@ function showCodeEntry(email, message = '') {
 
   const hasCode = CFG.EMAIL_HAS_CODE === true;
 
+  /* Six empty boxes that can never be filled are worse than no boxes at all.
+     While the email carries only a link, this screen says one thing and asks
+     for nothing; the code entry comes back the moment EMAIL_HAS_CODE is true.
+     The paste-the-link escape hatch stays reachable either way, because on an
+     installed iPhone it is the only thing that works. */
   showGate(
     el('h1', { text: 'Check your email', tabindex: '-1' }),
     el('p', {
       class: 'gate__lede',
       text: hasCode ? `We sent a code to ${email}.` : `We sent a sign-in link to ${email}.`,
     }),
-    hasCode ? null : el('div', { class: 'msg msg--ok', text: 'Tap the link in that email and you are in — on this device or any other.' }),
-    el('div', { class: 'fgroup' },
-      el('span', { class: 'cap', text: hasCode ? 'Six-digit code' : 'Or, if the email has a code' }),
+    hasCode ? null : el('div', { class: 'msg msg--ok', text: 'Tap the link in that email and you are in. You should not have to do this again on this device.' }),
+    hasCode ? el('div', { class: 'fgroup' },
+      el('span', { class: 'cap', text: 'Six-digit code' }),
       el('div', { class: 'otp' }, boxes),
-    ),
-    verifyBtn,
+    ) : null,
+    hasCode ? verifyBtn : null,
     message ? el('div', { class: 'msg msg--err', text: message }) : null,
     hasCode
       ? el('div', { class: 'msg', text: 'The same email also has a link in it. On an Android phone, tapping the link signs you in straight away.' })
-      : null,
+      : el('div', { class: 'msg', text: 'No email after a minute? Check spam. Sign-in emails are limited to a couple an hour for the whole board, so give it a moment before asking for another.' }),
     el('button', { class: 'linkq', type: 'button', text: 'Use a different address', onclick: () => showSignIn({ prefill: email }) }),
     el('button', { class: 'linkq', type: 'button', text: 'Trouble signing in?', onclick: () => showPasteLink(email) }),
   );
 
-  requestAnimationFrame(() => boxes[0].focus());
+  if (hasCode) requestAnimationFrame(() => boxes[0].focus());
 }
 
 /**
