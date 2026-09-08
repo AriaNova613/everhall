@@ -176,6 +176,14 @@ async function main() {
 
   db.createClient(CFG);
 
+  /* Register the worker here rather than after sign-in.
+     It caches the shell and nothing else — no tokens, no board data — so it
+     has no reason to wait for a session, and waiting was actively wrong: a
+     first-time visitor sees only the sign-in gate, so the worker never
+     installed for exactly the person being told to add the app to their home
+     screen. */
+  registerServiceWorker();
+
   /* A sign-in that came back from an email link or from Google arrives as a
      fragment on the URL. Surface a failure rather than silently showing the
      sign-in form again, which reads as "your password was wrong". */
@@ -480,7 +488,6 @@ async function enterApp(session) {
   subscribeRealtime();
   scheduleMidnight();
   setupInstall();
-  registerServiceWorker();
   renderAll();
   handleShortcut();
 }
