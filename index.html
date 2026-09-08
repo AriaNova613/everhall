@@ -606,7 +606,16 @@
     var p = PAIRS[pi];
     var s = G.slots[p.s1];
     sel.dir = s.dir;
-    sel.cell = preferEmpty ? firstEditableCell(p.s1) : s.cells[0];
+    if (preferEmpty) {
+      // land on the first EMPTY square — in the first home, else the twin — so typing only
+      // the missing letters never overwrites a crossing letter that is already there (and
+      // the word really does complete on the last keystroke, which is what triggers the jump);
+      // only when both homes are full does the cursor sit on the first letter for retyping
+      var e1 = firstEmptyCellIn(p.s1), e2 = e1 < 0 ? firstEmptyCellIn(p.s2) : -1;
+      if (e1 >= 0) sel.cell = e1;
+      else if (e2 >= 0) { sel.cell = e2; sel.dir = G.slots[p.s2].dir; }
+      else sel.cell = firstEditableCell(p.s1);
+    } else sel.cell = s.cells[0];
     if (pi !== almanacPending) almanacPending = -1;
     giveupArmed = false;
     render();
@@ -699,6 +708,9 @@
       if (step < 0 || (!day.locked[c] && !day.revealed[c] && (sequential || !day.pencil[c]))) { sel.cell = c; render(); return; }
       n += step;
     }
+    // ran off the end of the word while a blank is still behind the cursor (the solver
+    // started mid-word): wrap back to the first blank rather than parking on the last square
+    if (step > 0 && !sequential) { var f = firstEmptyCellIn(sid); if (f >= 0) sel.cell = f; }
     render();
   }
   function moveSel(dr, dc) {
