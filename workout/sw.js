@@ -24,7 +24,7 @@
    changes; tools/deploy.mjs refuses to publish if you forgot.
    =========================================================================== */
 
-const VERSION = '2026-09-08c';
+const VERSION = '2026-09-08d';
 const CACHE = `carr-athletics-${VERSION}`;
 
 /* The shell. Paths are relative so the worker keeps working if the app is ever
@@ -60,13 +60,28 @@ const isFont = url => url.pathname.includes('/fonts/') && url.pathname.endsWith(
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);
-    // addAll is atomic: one 404 and nothing is cached. Add individually so a
-    // single missing optional file cannot block the whole worker from
-    // installing — an app that works offline except for its icon still works.
-    await Promise.all(SHELL.map(async path => {
-      try { await cache.add(new Request(path, { cache: 'reload' })); }
-      catch (e) { console.warn('[sw] could not precache', path, e); }
-    }));
+
+    /* One at a time, not Promise.all.
+       Firing nineteen cold requests at once, while the page that triggered the
+       install is fetching the same origin for itself, reliably lost about half
+       of them on the real host — the failures were silent, and the app was
+       left with a cache good enough to boot but missing every icon. In series
+       the whole shell is a few hundred kilobytes and takes a moment longer,
+       which nobody experiences because it happens after the page has painted.
+
+       addAll is avoided for a different reason: it is atomic, so one bad entry
+       would leave nothing cached at all. Each file gets its own try, and one
+       retry, so a single hiccup costs one icon rather than the whole shell. */
+    for (const path of SHELL) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          await cache.add(new Request(path, { cache: 'reload' }));
+          break;
+        } catch (e) {
+          if (attempt) console.warn('[sw] could not precache', path, e);
+        }
+      }
+    }
   })());
   // Deliberately NOT skipWaiting(). Swapping the script out from under a page
   // that is mid-write is how you lose somebody's check-in. The page asks for
