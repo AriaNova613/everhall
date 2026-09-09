@@ -774,6 +774,16 @@ function seal(done, target) {
     }),
     svgEl('path', { class: 'seal__ck', d: 'M42 57.5 52.5 68 71 45' }),
   );
+
+  /* Measure the checkmark rather than guessing at it. The dash length was
+     hard-coded at 34 against a path that is actually 44.4 units long, so the
+     last quarter of the stroke was never drawn — the tick sat there very
+     slightly clipped, in a way that looks like nothing more than a slightly
+     stubby checkmark until you know to look for it. */
+  const tick = svg.querySelector('.seal__ck');
+  const len = tick.getTotalLength();
+  tick.style.setProperty('stroke-dasharray', String(len));
+  tick.style.setProperty('--ck-len', String(len));
   svg.style.setProperty('--arc-len', CIRC.toFixed(2));
   svg.style.setProperty('--arc-off', (CIRC * (1 - fraction)).toFixed(2));
   add(wrap, svg);

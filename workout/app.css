@@ -47,6 +47,20 @@
   --accent-wash:rgba(255,68,56,.10);
   --focus:#FF4438;
 
+  /* --- the action colour -------------------------------------------------
+     Red is the brand mark; green is what you press. Splitting them means the
+     two most important things on the screen never compete for the same
+     signal: the eye finds the green because it is the only saturated fill,
+     and the red identifies the app around it.
+
+     Green also carries the confirmations that follow — the seal once a day is
+     logged, a weekly target reached — so an action and its outcome are
+     visibly the same colour. 8.68:1 on the ground, and the same the other way
+     round, because the button's label is drawn in the ground colour. */
+  --go:#22C55E;
+  --go-dim:#2A7A49;        /* the seal's ring; hairlines only */
+  --go-wash:rgba(34,197,94,.10);
+
   /* Errors sit far enough above the accent in lightness that a red toast can
      never be mistaken for the red button. */
   --danger:#FF9A8B;
@@ -132,7 +146,7 @@ svg{display:block}
   position:absolute;left:var(--s4);top:calc(var(--s2) + env(safe-area-inset-top));
   z-index:60;min-height:44px;padding:0 16px;border-radius:var(--r2);
   display:inline-flex;align-items:center;text-decoration:none;
-  background:var(--accent);color:var(--ground);font-size:12px;font-weight:700;
+  background:var(--go);color:var(--ground);font-size:12px;font-weight:700;
   letter-spacing:.14em;text-transform:uppercase;transform:translateY(-200%);
 }
 .skip:focus{transform:none}
@@ -236,20 +250,22 @@ svg{display:block}
 }
 .seal{width:112px;height:112px;flex:none;position:relative}
 .seal svg{width:112px;height:112px;overflow:visible}
-.seal__track{fill:none;stroke:var(--line-2);stroke-width:1}
+.seal__track{fill:none;stroke:var(--go-dim);stroke-width:1;opacity:.6}
 .seal__arc{
-  fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;
+  fill:none;stroke:var(--go);stroke-width:2;stroke-linecap:round;
   transform:rotate(-90deg);transform-origin:56px 56px;
   animation:arc 620ms var(--e-out) 120ms both;
 }
-.seal__disc{fill:var(--accent-wash)}
+.seal__disc{fill:var(--go-wash)}
+/* stroke-dasharray is set from the path's measured length in app.js, so the
+   tick always draws to its end whatever the path becomes. */
 .seal__ck{
-  fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;
-  stroke-dasharray:34;stroke-dashoffset:0;
+  fill:none;stroke:var(--go);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;
+  stroke-dashoffset:0;
   animation:draw-ck 320ms var(--e-out) 60ms both;
 }
 @keyframes arc{from{stroke-dashoffset:var(--arc-len)}to{stroke-dashoffset:var(--arc-off)}}
-@keyframes draw-ck{from{stroke-dashoffset:34}to{stroke-dashoffset:0}}
+@keyframes draw-ck{from{stroke-dashoffset:var(--ck-len,44)}to{stroke-dashoffset:0}}
 .stamp__t{font-family:var(--display);font-weight:800;font-size:30px;line-height:1.05;letter-spacing:-.02em;text-transform:uppercase}
 .stamp__s{font-size:13.5px;color:var(--text-2);margin-top:5px}
 
@@ -257,7 +273,7 @@ svg{display:block}
 .plate-btn{
   display:flex;align-items:center;justify-content:center;gap:var(--s3);
   width:100%;min-height:64px;padding:0 var(--s5);
-  background:var(--accent);color:var(--ground);border-radius:var(--r2);
+  background:var(--go);color:var(--ground);border-radius:var(--r2);
   font-size:14px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
   transition:transform 90ms var(--e-io),filter var(--t-fast) var(--e-out);
 }
@@ -299,7 +315,7 @@ svg{display:block}
   font-variant-numeric:lining-nums tabular-nums;letter-spacing:-.01em;white-space:nowrap;
 }
 .stat__n.zero{color:var(--text-3)}
-.stat__n.met{color:var(--accent)}
+.stat__n.met{color:var(--go)}
 .stat__of{
   font-family:var(--ui);font-size:10.5px;font-weight:600;letter-spacing:.14em;
   text-transform:uppercase;color:var(--text-2);margin-left:5px;
@@ -341,7 +357,7 @@ svg{display:block}
 .wrow__c{margin-left:auto;display:flex;align-items:baseline;gap:5px;white-space:nowrap}
 .wrow__c b{font-family:var(--display);font-weight:800;font-size:20px;font-variant-numeric:tabular-nums}
 .wrow__c i{font-style:normal;font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--text-2)}
-.wrow__c.met b{color:var(--accent)}
+.wrow__c.met b{color:var(--go)}
 .wdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
 .wd{
   aspect-ratio:1;border-radius:var(--r1);background:var(--well);
@@ -663,7 +679,7 @@ textarea.field{min-height:104px;resize:vertical;line-height:1.5}
   transition:filter var(--t-fast) var(--e-out),background var(--t-fast) var(--e-out),transform 90ms var(--e-io);
 }
 .btn:active{transform:translateY(1px)}
-.btn--primary{background:var(--accent);color:var(--ground)}
+.btn--primary{background:var(--go);color:var(--ground)}
 .btn--primary:hover{filter:brightness(1.06)}
 .btn--ghost{border:1px solid var(--line-3);color:var(--text-1)}
 .btn--ghost:hover{background:var(--panel-2)}
