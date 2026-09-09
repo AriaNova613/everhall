@@ -85,8 +85,12 @@ async function fetchAll(table, columns, tune = q => q) {
   return { rows, truncated: true };
 }
 
+/* profiles.rule is deliberately absent. Each person's written definition of
+   what counts was removed from the interface; the column and its contents are
+   left alone in the database, but nothing fetches them, so it cannot leak back
+   onto a screen by accident. */
 export const PROFILE_COLUMNS =
-  'id, email, display_name, rule, weekly_target, color, weight_unit, share_weight';
+  'id, email, display_name, weekly_target, color, weight_unit, share_weight';
 
 export async function loadProfiles() {
   const { rows } = await fetchAll('profiles', PROFILE_COLUMNS,
@@ -214,7 +218,7 @@ export function removeWeight({ userId, day }) {
  * sent; anything else would be refused, and sending it anyway would produce a
  * baffling permission error instead of a clear one.
  */
-const PROFILE_WRITABLE = ['display_name', 'rule', 'weekly_target', 'weight_unit', 'share_weight'];
+const PROFILE_WRITABLE = ['display_name', 'weekly_target', 'weight_unit', 'share_weight'];
 
 export function saveProfile(userId, patch) {
   const clean = {};

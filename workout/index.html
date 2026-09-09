@@ -144,6 +144,15 @@
       <div class="panel week" id="weekCard"></div>
     </section>
 
+    <!-- Sits here, and not at the end, because on a phone the end is below five
+         month boards and a chart — far enough down that the card may as well
+         not exist. Desktop is unaffected: that layout assigns grid rows
+         explicitly, so source order decides nothing there. -->
+    <section class="sec sec--install" id="installSec" hidden aria-labelledby="hdInstall">
+      <h2 class="sr" id="hdInstall">Add this to your home screen</h2>
+      <div class="install" id="installCard"></div>
+    </section>
+
     <section class="sec sec--month" aria-labelledby="hdMonth">
       <h2 class="sr" id="hdMonth">Every month, person by person</h2>
       <div class="monthbar">
@@ -168,10 +177,6 @@
       <div class="panel weight" id="weightCard"></div>
     </section>
 
-    <section class="sec sec--install" id="installSec" hidden aria-labelledby="hdInstall">
-      <h2 class="sr" id="hdInstall">Add this to your home screen</h2>
-      <div class="install" id="installCard"></div>
-    </section>
   </main>
 </div>
 

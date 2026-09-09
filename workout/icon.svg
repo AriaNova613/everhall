@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Carr Athletics">
-  <rect width="200" height="200" rx="44" fill="#0b0a09"/>
-  <g fill="#c9a961">
+  <rect width="200" height="200" rx="44" fill="#0B0A09"/>
+  <g fill="#FF4438">
     <!-- a loaded bar, sagging under the weight -->
-    <path d="M40,98 Q100,115 160,98" fill="none" stroke="#c9a961" stroke-width="16" stroke-linecap="butt"/>
+    <path d="M40,98 Q100,115 160,98" fill="none" stroke="#FF4438" stroke-width="16" stroke-linecap="butt"/>
     <rect x="30" y="69" width="20" height="58" rx="4" transform="rotate(15 40 98)"/>
     <rect x="150" y="69" width="20" height="58" rx="4" transform="rotate(-15 160 98)"/>
     <rect x="16.5" y="75" width="13" height="36" rx="3" transform="rotate(15 23 93)"/>

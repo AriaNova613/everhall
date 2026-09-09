@@ -492,7 +492,6 @@ async function enterApp(session) {
   wireChrome();
   subscribeRealtime();
   scheduleMidnight();
-  setupInstall();
   renderAll();
   handleShortcut();
 }
@@ -508,7 +507,6 @@ async function reloadPeople(profiles) {
     email: p.email,
     name: p.display_name || p.email.split('@')[0],
     color: p.color,
-    rule: p.rule || '',
     weeklyTarget: p.weekly_target || 4,
     weightUnit: p.weight_unit || 'lb',
     shareWeight: !!p.share_weight,
@@ -521,7 +519,6 @@ async function reloadPeople(profiles) {
     email: m.email,
     name: m.display_name || m.email.split('@')[0],
     color: m.color,
-    rule: '',
     weeklyTarget: 4,
     weightUnit: 'lb',
     shareWeight: false,
@@ -745,14 +742,6 @@ function renderToday(today) {
       ]),
     );
   }
-
-  const rule = (me.rule || '').trim();
-  parts.push(el('div', { class: 'today__rule' },
-    el('span', { class: 'cap', text: 'What counts for you' }),
-    rule
-      ? el('p', { text: rule })
-      : el('p', { class: 'none', text: 'Not set yet. Write your own definition of what a workout is — nobody else can change it.' }),
-  ));
 
   mount(card, parts);
 }
@@ -1017,13 +1006,6 @@ function monthPlate(person, y, m) {
     ));
   }
 
-  const rule = (person.rule || '').trim();
-  add(plate, el('div', { class: 'plate__rule' },
-    el('span', { class: 'cap', text: `What counts for ${person.name}` }),
-    rule ? el('p', { text: rule }) : el('p', { class: 'none', text: 'Not set yet.' }),
-    isMe ? el('button', { class: 'linkb', type: 'button', text: 'Edit my rule', onclick: openSettings }) : null,
-  ));
-
   return plate;
 }
 
@@ -1181,7 +1163,7 @@ function renderWeight() {
 
   add(own, el('div', { class: 'wfoot' },
     el('button', {
-      class: 'ghost ghost--brass', type: 'button',
+      class: 'ghost ghost--accent', type: 'button',
       onclick: () => openWeightSheet(),
     }, icon('plus'), el('span', { text: series.length ? "Add today's weight" : 'Add your first' })),
   ));
@@ -1543,7 +1525,7 @@ function openDayEditor(iso) {
   });
 
   const remove = existing ? el('button', {
-    class: 'btn btn--danger', type: 'button', text: 'Remove',
+    class: 'btn btn--quiet', type: 'button', text: 'Remove',
     onclick: () => { closeSheet(); writeCheckin(iso, false, [], ''); },
   }) : null;
 
@@ -1642,7 +1624,7 @@ function openWeightSheet(day) {
   });
 
   const remove = existing ? el('button', {
-    class: 'btn btn--danger', type: 'button', text: 'Remove',
+    class: 'btn btn--quiet', type: 'button', text: 'Remove',
     onclick: async () => {
       try {
         await db.removeWeight({ userId: me.id, day: iso });
@@ -1669,13 +1651,6 @@ function openSettings() {
   const me = state.me;
 
   const nameField = el('input', { class: 'field', maxlength: '40', value: me.display_name || '', 'aria-label': 'Your display name' });
-  const ruleField = el('textarea', {
-    class: 'field', maxlength: '400', rows: '4',
-    placeholder: 'e.g. Two exercises, three working sets each. A walk does not count.',
-    'aria-label': 'What counts as a workout for you',
-  });
-  ruleField.value = me.rule || '';
-
   const targetButtons = [];
   let target = me.weekly_target || 4;
   const targetRow = el('div', { class: 'taggrid' });
@@ -1695,7 +1670,6 @@ function openSettings() {
 
   const body = el('div', {},
     el('div', { class: 'fgroup' }, el('span', { class: 'cap', text: 'Display name' }), nameField),
-    el('div', { class: 'fgroup' }, el('span', { class: 'cap', text: 'What counts as a workout for me' }), ruleField),
     el('div', { class: 'fgroup' },
       el('span', { class: 'cap', text: 'Days a week I am aiming for' }), targetRow,
       el('p', { class: 'hint hint--left', text: 'Everyone sets their own. Yours is what the week strip and the seal measure you against.' })),
@@ -1725,7 +1699,6 @@ function openSettings() {
       try {
         const updated = await db.saveProfile(me.id, {
           display_name: nameField.value.trim().slice(0, 40) || me.email.split('@')[0],
-          rule: ruleField.value.trim().slice(0, 400),
           weekly_target: target,
         });
         state.me = updated;
@@ -1767,19 +1740,26 @@ function showAbout() {
 const INSTALL_DISMISSED = 'carr.install.dismissed';
 const DISMISS_DAYS = 60;
 
-function setupInstall() {
-  window.addEventListener('beforeinstallprompt', e => {
-    e.preventDefault();
-    state.installEvent = e;
-    renderInstall();
-  });
-  window.addEventListener('appinstalled', () => {
-    state.installEvent = null;
-    try { localStorage.setItem(INSTALL_DISMISSED, String(Date.now())); } catch { /* private mode */ }
-    renderInstall();
-    toast('Added to your home screen');
-  });
-}
+/* These two listeners are attached the moment this module is evaluated, not
+   after sign-in.
+
+   `beforeinstallprompt` fires once, early, and only once — the browser does not
+   replay it. Registering the listener at the end of a boot that first waits on
+   a session, then on four network reads, reliably missed it, and the install
+   card then never appeared for anybody. That is the entire reason it seemed to
+   not exist. `renderInstall` is guarded because the event can easily arrive
+   before there is a page to draw it on. */
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  state.installEvent = e;
+  if (state.me) renderInstall();
+});
+
+window.addEventListener('appinstalled', () => {
+  state.installEvent = null;
+  try { localStorage.setItem(INSTALL_DISMISSED, String(Date.now())); } catch { /* private mode */ }
+  if (state.me) { renderInstall(); toast('Added to your home screen'); }
+});
 
 function installDismissedRecently() {
   try {
@@ -1818,7 +1798,7 @@ function installCardContent(canPrompt) {
   if (canPrompt) {
     return [head, el('div', { class: 'install__foot' },
       el('button', {
-        class: 'btn btn--brass', type: 'button', text: 'Install',
+        class: 'btn btn--accent', type: 'button', text: 'Install',
         onclick: async () => {
           const event = state.installEvent;
           if (!event) return;
@@ -1834,21 +1814,40 @@ function installCardContent(canPrompt) {
   }
 
   // iPhone: there is no API, so the instructions have to be real instructions.
-  const steps = el('ol', { class: 'steps' },
+  if (PLATFORM.ios) {
+    const steps = el('ol', { class: 'steps' },
+      el('li', {},
+        el('span', { class: 'glyph' }, icon('ios-share')),
+        el('p', {}, el('span', { text: 'Tap ' }), el('b', { text: 'Share' }), el('span', { text: ' in the Safari toolbar — the square with an arrow leaving the top.' })),
+      ),
+      el('li', {},
+        el('span', { class: 'glyph' }, icon('ios-add')),
+        el('p', {}, el('span', { text: 'Scroll down, choose ' }), el('b', { text: 'Add to Home Screen' }), el('span', { text: ', then tap Add.' })),
+      ),
+    );
+    return [head, steps, el('p', {
+      class: 'install__note',
+      text: 'An iPhone keeps the icon and Safari separate, so the new icon will ask you to sign in once of its own. Tap “Trouble signing in?” there and paste the link from your email.',
+    }), el('div', { class: 'install__foot' },
+      el('button', { class: 'btn btn--ghost', type: 'button', text: 'Not now', onclick: dismissInstall }),
+    )];
+  }
+
+  /* Everything else: Chrome on Android will normally have offered the event
+     above, but it withholds it on a repeat visit it has already prompted for,
+     and desktop browsers put the control in the address bar instead. Rather
+     than show nothing — which is what made this look like a missing feature —
+     say where the browser keeps it. */
+  return [head, el('ol', { class: 'steps' },
     el('li', {},
-      el('span', { class: 'glyph' }, icon('ios-share')),
-      el('p', {}, el('span', { text: 'Tap ' }), el('b', { text: 'Share' }), el('span', { text: ' in the Safari toolbar — the square with an arrow leaving the top.' })),
+      el('span', { class: 'glyph' }, icon('install')),
+      el('p', {}, el('span', { text: 'Open your browser’s menu — the ' }), el('b', { text: '⋮' }), el('span', { text: ' at the top right.' })),
     ),
     el('li', {},
       el('span', { class: 'glyph' }, icon('ios-add')),
-      el('p', {}, el('span', { text: 'Scroll down, choose ' }), el('b', { text: 'Add to Home Screen' }), el('span', { text: ', then tap Add.' })),
+      el('p', {}, el('span', { text: 'Choose ' }), el('b', { text: 'Install app' }), el('span', { text: ', or ' }), el('b', { text: 'Add to Home screen' }), el('span', { text: ' if that is what it says.' })),
     ),
-  );
-
-  return [head, steps, el('p', {
-    class: 'install__note',
-    text: 'Then open it from the new icon and sign in there with a six-digit code. An iPhone keeps the app and Safari separate, so signing in once in each is normal.',
-  }), el('div', { class: 'install__foot' },
+  ), el('div', { class: 'install__foot' },
     el('button', { class: 'btn btn--ghost', type: 'button', text: 'Not now', onclick: dismissInstall }),
   )];
 }
@@ -1858,11 +1857,34 @@ function dismissInstall() {
   renderInstall();
 }
 
-/** Reachable from settings, so declining the card is never a dead end. */
+/** Reachable from settings, so dismissing the card is never a dead end — and
+    so there is always somewhere to point somebody who says they cannot find
+    it. The dismissal timer is cleared, because opening this IS asking. */
 function showInstallHelp() {
+  try { localStorage.removeItem(INSTALL_DISMISSED); } catch { /* private mode */ }
+
+  const body = el('div', {},
+    installCardContent(!!state.installEvent).filter(node =>
+      !node.classList?.contains('install__hd') && !node.classList?.contains('install__foot')),
+  );
+
+  const actions = state.installEvent ? [el('button', {
+    class: 'btn btn--primary', type: 'button', text: 'Install',
+    onclick: async () => {
+      const event = state.installEvent;
+      state.installEvent = null;
+      closeSheet();
+      event.prompt();
+      await event.userChoice.catch(() => null);
+      renderInstall();
+    },
+  })] : null;
+
   openSheet({
     title: 'Add to home screen',
-    body: el('div', {}, installCardContent(!!state.installEvent).filter(node => !node.classList?.contains('install__hd'))),
+    subtitle: 'Its own icon, opening without the browser around it. Nothing is downloaded from a store.',
+    body,
+    actions,
   });
 }
 
