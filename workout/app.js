@@ -1396,6 +1396,13 @@ async function writeCheckin(iso, checked, tags, note) {
   reindex();
   renderAll();
 
+  /* Only for today, and only the first time. Editing tags on a day already
+     logged is not an achievement, and backfilling last Tuesday is bookkeeping
+     — throwing confetti at either would spend the gesture until it means
+     nothing. It fires off the optimistic update rather than the server's
+     reply, because the celebration belongs to the tap. */
+  if (checked && !previous && iso === todayISO()) celebrate();
+
   try {
     if (checked) await db.saveCheckin({ userId: uid, day: iso, tags, note });
     else await db.removeCheckin({ userId: uid, day: iso });
@@ -1949,6 +1956,181 @@ function offerUpdate(worker) {
     persist: true,
     action: { label: 'Reload', run: () => worker.postMessage('SKIP_WAITING') },
   });
+}
+
+/* ===========================================================================
+   The celebration
+
+   Canvas, not a heap of divs. A hundred and sixty elements each carrying their
+   own transform means a hundred and sixty style recalculations per frame, and
+   the phone this most needs to feel good on is the one least able to afford
+   them. One canvas draws the lot in a single pass and then removes itself.
+
+   It reads its colours out of the live stylesheet rather than hard-coding
+   them, so a future change to the palette carries through here without anybody
+   remembering that it should.
+   =========================================================================== */
+
+let confettiRun = null;
+
+function celebrate() {
+  try { navigator.vibrate?.(18); } catch { /* iOS has no vibrate */ }
+
+  // Reduced motion means reduced motion. The seal, the toast and the spoken
+  // announcement all still land, so nothing is only communicated by confetti.
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  if (!document.createElement('canvas').getContext) return;
+
+  if (confettiRun) confettiRun.stop();
+
+  const css = getComputedStyle(document.documentElement);
+  const read = (name, fallback) => (css.getPropertyValue(name).trim() || fallback);
+  // The person's own colour leads, because the day being celebrated is theirs.
+  const own = css.getPropertyValue(`--c-${state.me.color}`).trim() || read('--c-indigo', '#9FB3D9');
+  const colours = [
+    own, own,
+    read('--go', '#22C55E'), read('--go', '#22C55E'),
+    read('--accent', '#FF4438'),
+    read('--text-1', '#F2EDE4'),
+  ];
+
+  const canvas = el('canvas', { class: 'confetti', 'aria-hidden': 'true' });
+  document.body.append(canvas);
+
+  const ctx = canvas.getContext('2d');
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  let W = window.innerWidth;
+  let H = window.innerHeight;
+  const size = () => {
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+  size();
+
+  /* Fire from the seal — the object that just appeared where the button was —
+     so the confetti visibly comes out of the thing you pressed. */
+  const anchor = $('.seal') || $('#todayCard');
+  const box = anchor ? anchor.getBoundingClientRect() : { left: W / 2, top: H / 3, width: 0, height: 0 };
+  const originX = box.left + box.width / 2;
+  const originY = box.top + box.height / 2;
+
+  const pieces = [];
+  const total = W < 520 ? 150 : 230;
+
+  const burst = (count, x, y, power) => {
+    for (let i = 0; i < count; i++) {
+      // A fan biased upward: gravity then does the rest of the work.
+      const angle = -Math.PI / 2 + (Math.random() - 0.5) * 2.2;
+      const speed = power * (0.55 + Math.random() * 0.75);
+      const wide = Math.random() < 0.25;   // a few ribbons among the squares
+      pieces.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        w: wide ? 4 + Math.random() * 3 : 6 + Math.random() * 6,
+        h: wide ? 11 + Math.random() * 8 : 6 + Math.random() * 6,
+        rot: Math.random() * Math.PI * 2,
+        vrot: (Math.random() - 0.5) * 0.34,
+        colour: colours[(Math.random() * colours.length) | 0],
+        round: Math.random() < 0.18,
+        life: 0,
+      });
+    }
+  };
+
+  // Three staggered bursts across the card read as a celebration; one reads as
+  // a click. The later two are weaker so the first still leads.
+  /* The side bursts are placed across the VIEWPORT, not around the seal.
+     Anchored to the seal's own width they all landed in the same handful of
+     pixels and the whole thing read as a puff rather than a celebration. */
+  burst(Math.round(total * 0.46), originX, originY, 19);
+  const later = [
+    { at: 100, n: Math.round(total * 0.28), x: W * 0.2, power: 18 },
+    { at: 210, n: Math.round(total * 0.26), x: W * 0.8, power: 18 },
+  ];
+
+  const GRAVITY = 0.30;
+  const DRAG = 0.993;
+  const MAX_MS = 3000;
+
+  let raf = 0;
+  let start = 0;
+  let stopped = false;
+
+  /* A hard timer as well as the frame loop. requestAnimationFrame stops
+     entirely while a tab is in the background, so a phone locked mid-burst
+     would otherwise leave the canvas sitting in the document until the next
+     render. This guarantees it goes. */
+  let guard = 0;
+
+  const stop = () => {
+    if (stopped) return;
+    stopped = true;
+    cancelAnimationFrame(raf);
+    clearTimeout(guard);
+    window.removeEventListener('resize', size);
+    canvas.remove();
+    if (confettiRun && confettiRun.canvas === canvas) confettiRun = null;
+  };
+  confettiRun = { stop, canvas };
+  window.addEventListener('resize', size);
+
+  const frame = now => {
+    if (!start) start = now;
+    const elapsed = now - start;
+
+    for (const wave of later) {
+      if (!wave.fired && elapsed >= wave.at) {
+        wave.fired = true;
+        burst(wave.n, wave.x, originY, wave.power);
+      }
+    }
+
+    ctx.clearRect(0, 0, W, H);
+
+    // The last third of the run fades everything out, so nothing vanishes
+    // mid-air on a slow phone that has not got the pieces off-screen yet.
+    const fade = elapsed < MAX_MS * 0.62 ? 1 : Math.max(0, 1 - (elapsed - MAX_MS * 0.62) / (MAX_MS * 0.38));
+
+    let alive = 0;
+    for (const p of pieces) {
+      p.life++;
+      p.vy += GRAVITY;
+      p.vx *= DRAG;
+      p.vy *= DRAG;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vrot;
+
+      if (p.y - 24 > H) continue;
+      alive++;
+
+      ctx.save();
+      ctx.globalAlpha = fade;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.colour;
+      if (p.round) {
+        ctx.beginPath();
+        ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Squash across the rotation to fake a piece tumbling in three
+        // dimensions; a flat rectangle spinning in the plane looks like a logo.
+        ctx.scale(1, Math.max(0.25, Math.abs(Math.cos(p.life * 0.16))));
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      }
+      ctx.restore();
+    }
+
+    if (elapsed > MAX_MS || (alive === 0 && elapsed > 400)) return stop();
+    raf = requestAnimationFrame(frame);
+  };
+
+  raf = requestAnimationFrame(frame);
+  guard = setTimeout(stop, MAX_MS + 900);
 }
 
 /* ===========================================================================
