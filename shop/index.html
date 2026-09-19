@@ -54,6 +54,13 @@ h2{font:700 1.9rem/1.15 var(--display);margin:0 0 6px;text-wrap:balance}
 .facts{list-style:none;padding:0;margin:22px 0;border-top:1px solid var(--paper-dim)}
 .facts li{display:grid;grid-template-columns:9.5rem 1fr;gap:14px;padding:10px 0;border-bottom:1px solid var(--paper-dim);font-size:.98rem}
 .facts b{font:600 .72rem/1.9 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+.coats-h{font:600 .74rem/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:6px 0 12px}
+.coats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.coats figure{margin:0;background:var(--paper-hi);border:1px solid var(--paper-dim);border-radius:3px;overflow:hidden}
+.coats img{display:block;width:100%;height:auto}
+.coats figcaption{font:500 .74rem/1.2 var(--sans);letter-spacing:.04em;color:var(--ink-soft);padding:8px 8px 9px;text-align:center}
+.caveat{font-size:.86rem;color:var(--ink-soft);font-style:italic;margin:10px 0 22px}
+@media (max-width:560px){.coats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .note{background:var(--accent-wash);border-left:3px solid var(--accent);padding:12px 16px;font-size:.95rem;margin:0 0 22px}
 .actions{display:flex;flex-wrap:wrap;gap:12px}
 .btn{display:inline-block;font:600 .82rem/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;text-decoration:none;padding:15px 22px;border-radius:3px;border:1.5px solid var(--accent)}
@@ -106,17 +113,27 @@ footer{font:500 .78rem/1.5 var(--sans);color:var(--ink-faint);padding:0 0 40px}
     <div class="wrap nut" style="grid-template-columns:minmax(0,1fr);max-width:760px">
       <div>
         <p class="eyebrow">The Everhall Nutcracker</p>
-        <h2>The Velvet Guard</h2>
+        <h2>The Everhall Guard</h2>
         <p class="price">$399 <small>CAD · local pickup</small></p>
 
         <ul class="facts">
           <li><b>Height</b><span>About 6 ft, and 7 ft to the top of the hat</span></li>
-          <li><b>Coat</b><span>Teal velvet, gold braid and epaulettes, gold-banded cuffs</span></li>
+          <li><b>Coat</b><span>Your choice of teal or plum velvet, or emerald or ruby sequin, with gold braid, epaulettes and cuffs</span></li>
           <li><b>Face</b><span>Hand-painted</span></li>
           <li><b>Trim</b><span>Faux-fur beard, tall faux-fur hat, black boots</span></li>
           <li><b>Base</b><span>Square gold base, stands on its own</span></li>
           <li><b>Made</b><span>By hand, to order, a few each season</span></li>
         </ul>
+
+        <h3 class="coats-h">Choose the coat</h3>
+        <div class="coats">
+          <figure><img src="img/coat-teal.jpg" alt="The Everhall nutcracker, coat digitally mocked up in a teal velvet coat" width="480" height="720" loading="lazy"><figcaption>Teal velvet</figcaption></figure>
+          <figure><img src="img/coat-plum.jpg" alt="The Everhall nutcracker, coat digitally mocked up in a plum velvet coat" width="480" height="720" loading="lazy"><figcaption>Plum velvet</figcaption></figure>
+          <figure><img src="img/coat-emerald.jpg" alt="The Everhall nutcracker, coat digitally mocked up in an emerald sequin coat" width="480" height="720" loading="lazy"><figcaption>Emerald sequin</figcaption></figure>
+          <figure><img src="img/coat-ruby.jpg" alt="The Everhall nutcracker, coat digitally mocked up in a ruby sequin coat" width="480" height="720" loading="lazy"><figcaption>Ruby sequin</figcaption></figure>
+        </div>
+        <p class="caveat">Our nutcracker, shown with the coat colours digitally mocked up. Every one is built and
+        painted by hand to order, so yours will differ in the details.</p>
 
         <p class="note">Indoors or on a covered porch only — the velvet and fur aren't made for rain or snow.
         At this size it can't go by courier, so it's local pickup or delivery nearby.</p>
