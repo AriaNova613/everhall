@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Everhall — Seasonal Shop</title>
+<meta name="description" content="Six-foot hand-painted nutcrackers, made to order for the season, and crossword tees where every grid really works. From Everhall, home of Double Cross.">
+<meta name="theme-color" content="#f2efe6">
+<link rel="canonical" href="https://everhall.ca/shop/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap">
+<style>
+:root{
+  --paper:#f2efe6; --paper-hi:#faf8f1; --paper-dim:#e7e2d4;
+  --ink:#232028; --ink-soft:#6a6472; --ink-faint:#9b95a4;
+  --accent:#1d5a56; --accent-wash:#1d5a5614; --gold:#9a7b2d; --ochre:#8a5a24;
+  --display:'Fraunces', Georgia, 'Iowan Old Style', serif;
+  --serif:'Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{background:var(--paper)}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.6 var(--serif);-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+a:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 22px}
+
+/* masthead */
+header{border-bottom:1px solid var(--paper-dim);background:var(--paper-hi)}
+header .wrap{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding-top:16px;padding-bottom:14px}
+.mark{font:700 1.45rem/1 var(--display);letter-spacing:.14em;text-decoration:none;color:var(--ink)}
+nav{display:flex;gap:20px;font:500 .78rem/1 var(--sans);letter-spacing:.12em;text-transform:uppercase}
+nav a{text-decoration:none;color:var(--ink-soft)}
+nav a[aria-current]{color:var(--ink);border-bottom:2px solid var(--gold);padding-bottom:3px}
+
+/* intro */
+.intro{padding-top:56px;padding-bottom:34px}
+.eyebrow{font:600 .74rem/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin:0 0 14px}
+h1{font:700 clamp(2.1rem,5vw,3.3rem)/1.08 var(--display);margin:0 0 16px;text-wrap:balance;max-width:17ch}
+.lede{font-size:1.12rem;color:var(--ink-soft);max-width:58ch;margin:0}
+
+/* sections */
+section{padding:44px 0;border-top:1px solid var(--paper-dim)}
+h2{font:700 1.9rem/1.15 var(--display);margin:0 0 6px;text-wrap:balance}
+.sub{color:var(--ink-soft);margin:0 0 26px;max-width:60ch}
+
+/* the nutcracker */
+.nut{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:40px;align-items:start}
+.photo{background:var(--paper-hi);border:1px solid var(--paper-dim);border-radius:4px;padding:18px;display:flex;justify-content:center}
+.photo img{display:block;max-height:560px;width:auto;max-width:100%}
+.price{font:700 2rem/1 var(--display);margin:4px 0 4px}
+.price small{font:500 .8rem/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin-left:8px}
+.facts{list-style:none;padding:0;margin:22px 0;border-top:1px solid var(--paper-dim)}
+.facts li{display:grid;grid-template-columns:9.5rem 1fr;gap:14px;padding:10px 0;border-bottom:1px solid var(--paper-dim);font-size:.98rem}
+.facts b{font:600 .72rem/1.9 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+.note{background:var(--accent-wash);border-left:3px solid var(--accent);padding:12px 16px;font-size:.95rem;margin:0 0 22px}
+.actions{display:flex;flex-wrap:wrap;gap:12px}
+.btn{display:inline-block;font:600 .82rem/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;text-decoration:none;padding:15px 22px;border-radius:3px;border:1.5px solid var(--accent)}
+.btn.primary{background:var(--accent);color:var(--paper-hi)}
+.btn.ghost{color:var(--accent);background:transparent}
+
+/* tees */
+.tees{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.tee{margin:0;background:var(--paper-hi);border:1px solid var(--paper-dim);border-radius:4px;overflow:hidden}
+.tee img{display:block;width:100%;height:auto}
+.tee figcaption{font:500 .78rem/1.3 var(--sans);letter-spacing:.06em;color:var(--ink-soft);padding:10px 12px}
+.soon{display:inline-block;font:600 .72rem/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ochre);border:1px solid currentColor;padding:6px 10px;border-radius:2px;margin-top:20px}
+
+/* play */
+.play{padding:40px 0 60px;border-top:1px solid var(--paper-dim)}
+.play .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px}
+.play p{margin:0;max-width:52ch}
+.play strong{font:700 1.25rem/1.3 var(--display)}
+footer{font:500 .78rem/1.5 var(--sans);color:var(--ink-faint);padding:0 0 40px}
+
+@media (max-width:760px){
+  .nut{grid-template-columns:1fr;gap:26px}
+  .tees{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .facts li{grid-template-columns:7.5rem 1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="mark" href="/">EVERHALL</a>
+    <nav aria-label="Everhall">
+      <a href="/">Double Cross</a>
+      <a href="/shop/" aria-current="page">Shop</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap intro">
+    <p class="eyebrow">Christmas 2026 · Made to order</p>
+    <h1>A six-foot nutcracker, painted by hand.</h1>
+    <p class="lede">Everhall makes a small number of life-size nutcrackers each season, one at a time, in our own
+    workshop. Alongside them: crossword tees where every grid genuinely works, from the people behind
+    the daily puzzle, Double Cross.</p>
+  </div>
+
+  <section id="nutcracker">
+    <div class="wrap nut" style="grid-template-columns:minmax(0,1fr);max-width:760px">
+      <div>
+        <p class="eyebrow">The Everhall Nutcracker</p>
+        <h2>The Velvet Guard</h2>
+        <p class="price">$399 <small>CAD · local pickup</small></p>
+
+        <ul class="facts">
+          <li><b>Height</b><span>About 6 ft, and 7 ft to the top of the hat</span></li>
+          <li><b>Coat</b><span>Teal velvet, gold braid and epaulettes, gold-banded cuffs</span></li>
+          <li><b>Face</b><span>Hand-painted</span></li>
+          <li><b>Trim</b><span>Faux-fur beard, tall faux-fur hat, black boots</span></li>
+          <li><b>Base</b><span>Square gold base, stands on its own</span></li>
+          <li><b>Made</b><span>By hand, to order, a few each season</span></li>
+        </ul>
+
+        <p class="note">Indoors or on a covered porch only — the velvet and fur aren't made for rain or snow.
+        At this size it can't go by courier, so it's local pickup or delivery nearby.</p>
+
+        <span class="soon">Photos and reservations open this week</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="tees">
+    <div class="wrap">
+      <p class="eyebrow">Everhall crossword tees</p>
+      <h2>Every grid is a real crossword.</h2>
+      <p class="sub">The word runs down the middle and every answer across genuinely crosses it — built and
+      checked the same way as the daily puzzle. Halloween designs first, Christmas from late October.</p>
+      <div class="tees">
+        <figure class="tee"><img src="img/tee-halloween.jpg" alt="Black tee with a crossword built on the word HALLOWEEN" width="457" height="640" loading="lazy"><figcaption>Halloween</figcaption></figure>
+        <figure class="tee"><img src="img/tee-pumpkin.jpg" alt="Black tee with a crossword built on the word PUMPKIN" width="457" height="640" loading="lazy"><figcaption>Pumpkin</figcaption></figure>
+        <figure class="tee"><img src="img/tee-nutcracker.jpg" alt="White tee with a crossword built on the word NUTCRACKER" width="457" height="640" loading="lazy"><figcaption>Nutcracker</figcaption></figure>
+        <figure class="tee"><img src="img/tee-christmas.jpg" alt="White tee with a crossword built on the word CHRISTMAS" width="457" height="640" loading="lazy"><figcaption>Christmas</figcaption></figure>
+      </div>
+      <span class="soon">Arriving on Amazon this October</span>
+    </div>
+  </section>
+</main>
+
+<div class="play">
+  <div class="wrap">
+    <p><strong>Everhall is also home to Double Cross.</strong><br>
+    Every clue has two answers; the grid decides where they live. A new puzzle every day.</p>
+    <a class="btn ghost" href="/">Play today's puzzle</a>
+  </div>
+</div>
+
+<footer><div class="wrap">© 2026 Everhall</div></footer>
+</body>
+</html>
