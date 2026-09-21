@@ -7,6 +7,9 @@
 <meta name="description" content="Six-foot hand-painted nutcrackers, made to order for the season, and crossword tees where every grid really works. From Everhall, home of Double Cross.">
 <meta name="theme-color" content="#f2efe6">
 <link rel="canonical" href="https://everhall.ca/shop/">
+<link rel="icon" type="image/png" sizes="32x32" href="/shop/img/favicon-32.png">
+<meta property="og:title" content="Everhall — Seasonal Shop">
+<meta property="og:image" content="https://everhall.ca/shop/img/everhall-crest-512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap">
@@ -28,8 +31,9 @@ a:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-offse
 
 /* masthead */
 header{border-bottom:1px solid var(--paper-dim);background:var(--paper-hi)}
-header .wrap{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding-top:16px;padding-bottom:14px}
-.mark{font:700 1.45rem/1 var(--display);letter-spacing:.14em;text-decoration:none;color:var(--ink)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:16px;padding-bottom:14px}
+.mark{display:inline-flex;align-items:center;gap:12px;font:700 1.45rem/1 var(--display);letter-spacing:.14em;text-decoration:none;color:var(--ink)}
+.mark img{width:40px;height:40px;display:block}
 nav{display:flex;gap:20px;font:500 .78rem/1 var(--sans);letter-spacing:.12em;text-transform:uppercase}
 nav a{text-decoration:none;color:var(--ink-soft)}
 nav a[aria-current]{color:var(--ink);border-bottom:2px solid var(--gold);padding-bottom:3px}
@@ -93,7 +97,7 @@ footer{font:500 .78rem/1.5 var(--sans);color:var(--ink-faint);padding:0 0 40px}
 
 <header>
   <div class="wrap">
-    <a class="mark" href="/">EVERHALL</a>
+    <a class="mark" href="/shop/"><img src="img/everhall-crest-96.png" alt="" width="40" height="40">EVERHALL</a>
     <nav aria-label="Everhall">
       <a href="/">Double Cross</a>
       <a href="/shop/" aria-current="page">Shop</a>
