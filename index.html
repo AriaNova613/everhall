@@ -339,6 +339,8 @@
   .endpanel .clockline { font-size: 13.5px; color: var(--ink-soft); margin: -6px 0 12px; font-variant-numeric: tabular-nums; }
   .endpanel .rowbtns { display: flex; gap: 8px; flex-wrap: wrap; }
   .countdown { font-size: 13px; color: var(--ink-soft); margin-top: 10px; font-variant-numeric: tabular-nums; }
+  .shopline { font-size: 12.5px; color: var(--ink-soft); margin-top: 12px; }
+  .shopline a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 
   /* ---------- modal ---------- */
   .scrim { position: fixed; inset: 0; background: rgba(35,32,40,.45); display: none; align-items: flex-start; justify-content: center; z-index: 60; padding: 24px 14px; overflow-y: auto; }
@@ -1160,6 +1162,7 @@
     }
     h += '<div class="rowbtns"><button class="btn primary" id="sharebtn2">Share</button><button class="btn" id="statsbtn2">Stats</button>'
       + (day.win ? '<button class="btn" id="replaybtn" title="Watch the fold again">↻ Watch again</button>' : '') + '</div>';
+    h += '<div class="shopline">Everhall also makes crossword tees &mdash; every grid a real crossword, like this one. <a href="/shop/">See the shop</a></div>';
     h += '<div class="countdown" id="countdown"></div>';
     ep.innerHTML = h;
     if (day.win) document.getElementById('replaybtn').addEventListener('click', function () { winShow({ replay: true }); });
