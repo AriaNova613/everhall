@@ -1,6 +1,6 @@
 # everhall.ca — Double Cross
 
-A daily word puzzle: every clue has two answers, and the grid decides where they live.
+A daily word puzzle: each card carries two clues and two answers, and nothing tells you which goes where.
 A new puzzle every calendar day, computed in the browser — no server, no tracking, no accounts.
 
 **Play:** https://everhall.ca
