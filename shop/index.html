@@ -86,12 +86,12 @@ h2{font:700 1.9rem/1.15 var(--display);margin:0 0 6px;text-wrap:balance}
 .how{font-size:.9rem;color:var(--ink-soft);margin:18px 0 0;max-width:56ch}
 .soon{display:inline-block;font:600 .72rem/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ochre);border:1px solid currentColor;padding:6px 10px;border-radius:2px;margin-top:20px}
 
-/* hero: the hall on a winter evening. Lit windows read as a crossword grid. */
+/* hero: a real street on a winter evening, snow falling over it. */
 .hero{position:relative;overflow:hidden;background:#111a17;color:#f2efe6;border-bottom:1px solid #0b120f}
 .hero canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:2}
-.hero .hall{position:absolute;left:0;right:0;bottom:0;width:100%;height:clamp(190px,21vw,270px);display:block}
-.hero::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(17,26,23,.9) 0%,rgba(17,26,23,.6) 38%,rgba(17,26,23,0) 66%),linear-gradient(180deg,rgba(17,26,23,.75) 0%,rgba(17,26,23,0) 34%)}
-.hero .wrap{position:relative;z-index:3;padding-top:58px;padding-bottom:clamp(175px,20vw,240px)}
+.hero .scene{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:66% 64%;display:block;z-index:0}
+.hero::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(9,15,13,.92) 0%,rgba(9,15,13,.78) 30%,rgba(9,15,13,.26) 60%,rgba(9,15,13,.05) 100%),linear-gradient(180deg,rgba(9,15,13,.62) 0%,rgba(9,15,13,.08) 42%,rgba(9,15,13,.42) 100%)}
+.hero .wrap{position:relative;z-index:3;padding-top:clamp(74px,9vw,112px);padding-bottom:clamp(96px,12vw,150px)}
 .hero .eyebrow{color:#e2b158}
 .hero h1{color:#f7f3ea;max-width:15ch;margin-bottom:16px;font-size:clamp(2rem,4.4vw,3rem);text-shadow:0 2px 30px rgba(0,0,0,.5)}
 .hero .lede{color:#ccd4cb;max-width:54ch}
@@ -100,7 +100,9 @@ h2{font:700 1.9rem/1.15 var(--display);margin:0 0 6px;text-wrap:balance}
 .hero .btn.ghost{color:#f2efe6;border-color:#6d7d72}
 .hero .under{margin:20px 0 0;font-size:.92rem;color:#a7b1a7}
 .hero .under a{color:#e2b158}
-@media (max-width:760px){.hero .wrap{padding-top:54px;padding-bottom:190px}}
+@media (max-width:760px){.hero .wrap{padding-top:58px;padding-bottom:82px}
+  .hero::after{background:linear-gradient(180deg,rgba(9,15,13,.9) 0%,rgba(9,15,13,.72) 45%,rgba(9,15,13,.82) 100%)}
+  .hero .scene{object-position:62% 66%}}
 
 /* one house: the thread between the three things */
 .thread{background:var(--paper-hi)}
@@ -143,34 +145,10 @@ footer{font:500 .78rem/1.5 var(--sans);color:var(--ink-faint);padding:0 0 40px}
 <main>
   <section class="hero" aria-label="Everhall">
     <canvas id="snow" aria-hidden="true"></canvas>
-    <svg class="hall" viewBox="0 0 1600 330" preserveAspectRatio="xMidYMax slice" role="img" aria-label="Everhall at dusk: a hall whose lit windows are laid out like a crossword grid">
-      <defs>
-        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#111a17" stop-opacity="0"/><stop offset="1" stop-color="#0d1512"/>
-        </linearGradient>
-        <radialGradient id="glow" cx="0.5" cy="0.66" r="0.5">
-          <stop offset="0" stop-color="#e2b158" stop-opacity=".34"/><stop offset="1" stop-color="#e2b158" stop-opacity="0"/>
-        </radialGradient>
-      </defs>
-      <rect width="1600" height="330" fill="url(#sky)"/>
-      <ellipse cx="800" cy="300" rx="560" ry="190" fill="url(#glow)"/>
-      <g fill="#0c1411">
-        <path d="M120 330V214l54-34 54 34v116z"/>
-        <path d="M232 330V236l42-26 42 26v94z"/>
-        <path d="M1320 330V226l50-32 50 32v104z"/>
-        <path d="M1432 330V246l38-24 38 24v84z"/>
-      </g>
-      <g fill="#0b1310">
-        <rect x="470" y="150" width="660" height="180" rx="2"/>
-        <path d="M470 150 800 74 1130 150z"/>
-        <rect x="788" y="56" width="24" height="26" rx="2"/>
-      </g>
-      <g id="panes" fill="#e2b158"></g>
-      <rect x="768" y="252" width="64" height="78" rx="2" fill="#080e0c"/>
-      <rect x="795" y="284" width="8" height="8" rx="1" fill="#e2b158" opacity=".9"/>
-      <rect x="768" y="246" width="64" height="6" rx="1" fill="#0e1714"/>
-      <rect x="0" y="322" width="1600" height="8" fill="#080e0c"/>
-    </svg>
+    <img class="scene" src="img/hero-street.jpg"
+         srcset="img/hero-street-sm.jpg 1100w, img/hero-street.jpg 2000w" sizes="100vw"
+         width="2000" height="950" fetchpriority="high"
+         alt="A village street on a winter evening: one shop window lit and garlanded, the road dark and empty">
     <div class="wrap">
       <p class="eyebrow">Everhall &middot; winter 2026</p>
       <h1>Made for the long evenings.</h1>
@@ -181,7 +159,7 @@ footer{font:500 .78rem/1.5 var(--sans);color:var(--ink-faint);padding:0 0 40px}
         <a class="btn primary" href="#nutcracker">See the nutcracker</a>
         <a class="btn ghost" href="#tees">Crossword tees</a>
       </div>
-      <p class="under">Every lit window above is a square in a crossword. <a href="/">Play today&rsquo;s Double Cross</a>.</p>
+      <p class="under">There is a new crossword on the mat every morning too. <a href="/">Play today&rsquo;s Double Cross</a>.</p>
     </div>
   </section>
 
@@ -303,21 +281,6 @@ footer{font:500 .78rem/1.5 var(--sans);color:var(--ink-faint);padding:0 0 40px}
 <footer><div class="wrap">© 2026 Everhall · <a href="mailto:customerservice@everhall.ca">customerservice@everhall.ca</a></div></footer>
 <script>
 (function () {
-  var panes = document.getElementById('panes');
-  if (panes) {
-    /* Lit windows laid out as a crossword: a few panes stay dark, like blocked squares. */
-    var dark = { '0,1': 1, '1,4': 1, '0,6': 1, '1,0': 1, '0,8': 1 };
-    var x0 = 520, y0 = 164, w = 48, h = 30, gx = 16, gy = 18, out = '';
-    for (var r = 0; r < 2; r++) {
-      for (var c = 0; c < 9; c++) {
-        if (dark[r + ',' + c]) continue;
-        var o = (0.5 + ((r * 5 + c * 3) % 5) * 0.1).toFixed(2);
-        out += '<rect x="' + (x0 + c * (w + gx)) + '" y="' + (y0 + r * (h + gy)) +
-               '" width="' + w + '" height="' + h + '" rx="1.5" opacity="' + o + '"/>';
-      }
-    }
-    panes.innerHTML = out;
-  }
 
   var c = document.getElementById('snow');
   if (!c || !c.getContext) return;
