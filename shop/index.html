@@ -4,21 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Everhall — Seasonal Shop</title>
-<meta name="description" content="Six-foot hand-painted nutcrackers, made to order for the season, and crossword tees where every grid really works. From Everhall, home of Double Cross.">
+<meta name="description" content="Printable Christmas puzzle books for the puzzle lover on your list, crossword tees where every grid really works, and a six-foot hand-painted nutcracker. From Everhall, home of Double Cross.">
 <meta name="theme-color" content="#f2efe6">
 <link rel="canonical" href="https://everhall.ca/shop/">
 <link rel="icon" type="image/png" sizes="32x32" href="/shop/img/favicon-32.png">
 <meta property="og:title" content="Everhall — Seasonal Shop">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://everhall.ca/shop/">
-<meta property="og:description" content="Crossword tees with grids that genuinely solve, and a nutcracker built and painted by hand. From Everhall, home of Double Cross.">
+<meta property="og:description" content="Printable Christmas puzzle books, crossword tees with grids that genuinely solve, and a nutcracker built and painted by hand. From Everhall, home of Double Cross.">
 <meta property="og:image" content="https://everhall.ca/shop/img/room-window.jpg">
 <meta property="og:image:width" content="1800">
 <meta property="og:image:height" content="900">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&amp;display=swap">
 <style>
 :root{
   --paper:#f2efe6; --paper-hi:#faf8f1; --paper-dim:#e7e2d4;
@@ -72,13 +72,7 @@ h2{font:700 1.9rem/1.15 var(--display);margin:0 0 6px;text-wrap:balance}
 .details figure{margin:0;aspect-ratio:3/4;overflow:hidden;border:1px solid var(--paper-dim);border-radius:3px;background:var(--paper-hi)}
 .details img{width:100%;height:100%;object-fit:cover;display:block}
 .gallery .caveat{margin:0}
-.coats-h{font:600 .74rem/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:6px 0 12px}
-.coats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-.coats figure{margin:0;background:var(--paper-hi);border:1px solid var(--paper-dim);border-radius:3px;overflow:hidden}
-.coats img{display:block;width:100%;height:auto}
-.coats figcaption{font:500 .74rem/1.2 var(--sans);letter-spacing:.04em;color:var(--ink-soft);padding:8px 8px 9px;text-align:center}
 .caveat{font-size:.86rem;color:var(--ink-soft);font-style:italic;margin:10px 0 22px}
-@media (max-width:560px){.coats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .note{background:var(--accent-wash);border-left:3px solid var(--accent);padding:12px 16px;font-size:.95rem;margin:0 0 22px}
 .actions{display:flex;flex-wrap:wrap;gap:12px}
 .btn{display:inline-block;font:600 .82rem/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;text-decoration:none;padding:15px 22px;border-radius:3px;border:1.5px solid var(--accent)}
@@ -92,6 +86,22 @@ h2{font:700 1.9rem/1.15 var(--display);margin:0 0 6px;text-wrap:balance}
 .tee figcaption{font:500 .78rem/1.3 var(--sans);letter-spacing:.06em;color:var(--ink-soft);padding:10px 12px}
 .how{font-size:.9rem;color:var(--ink-soft);margin:18px 0 0;max-width:56ch}
 .soon{display:inline-block;font:600 .72rem/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ochre);border:1px solid currentColor;padding:6px 10px;border-radius:2px;margin-top:20px}
+
+/* printable puzzle books: each card is one link to its Gumroad page */
+.books{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.book{display:flex;flex-direction:column;background:var(--paper-hi);border:1px solid var(--paper-dim);border-radius:4px;overflow:hidden;text-decoration:none;color:var(--ink)}
+.book:hover{border-color:var(--accent)}
+.book:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.book .cover{aspect-ratio:1/1;background:#fff;border-bottom:1px solid var(--paper-dim)}
+.book .cover img{display:block;width:100%;height:100%;object-fit:contain}
+.book .body{display:flex;flex-direction:column;flex:1;padding:14px 14px 16px}
+.book h3{font:700 1.08rem/1.25 var(--display);margin:0 0 6px}
+.book p{margin:0 0 12px;font-size:.9rem;line-height:1.5;color:var(--ink-soft)}
+.book .buy{margin-top:auto;display:flex;align-items:baseline;justify-content:space-between;gap:10px;font:600 .74rem/1.2 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.book .buy b{font:700 1.2rem/1 var(--display);letter-spacing:0;text-transform:none;color:var(--ink)}
+.fine{font-size:.86rem;color:var(--ink-soft);margin:20px 0 0;max-width:70ch}
+@media (max-width:900px){.books{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:480px){.books{grid-template-columns:1fr}}
 
 /* hero: a garlanded shop window in daylight, lamps on inside, snow falling across it.
    Light treatment -- the headline is ink on paper, so the photograph stays as bright as it was
@@ -161,14 +171,136 @@ footer{font:500 .78rem/1.5 var(--sans);color:var(--ink-faint);padding:0 0 40px}
     <div class="wrap">
       <p class="eyebrow">Everhall</p>
       <h1>Everything here starts with a grid.</h1>
-      <p class="lede">A new crossword every morning, free to play. Shirts whose grids genuinely solve.
-      And one thing built by hand each season.</p>
+      <p class="lede">A new crossword every morning, free to play. Christmas puzzle books you print at home.
+      Shirts whose grids genuinely solve. And one thing built by hand each season.</p>
       <div class="actions">
-        <a class="btn primary" href="#tees">Shop the tees</a>
+        <a class="btn primary" href="#puzzles">Shop puzzle gifts</a>
         <a class="btn ghost" href="/">Play today&rsquo;s puzzle</a>
       </div>
-      <p class="under">Featured this winter: a nutcracker, six feet of it, painted by hand.
-      <a href="#nutcracker">See it</a>.</p>
+      <p class="under">Also here: <a href="#tees">crossword tees</a>, and a nutcracker six feet tall,
+      <a href="#nutcracker">painted by hand</a>.</p>
+    </div>
+  </section>
+
+  <section id="puzzles">
+    <div class="wrap">
+      <p class="eyebrow">Printable Christmas puzzles</p>
+      <h2>For the puzzle lover on your list</h2>
+      <p class="sub">Puzzle books from GoodWorkBooks, our printable-puzzle imprint. Buy on Gumroad, download
+      straight away and print at home; nothing is mailed. Every grid is checked by computer before it goes on sale.</p>
+      <div class="books">
+        <a class="book" href="https://goodworkbooks.gumroad.com/l/starring-your-family" data-goatcounter-click="shop-starring-your-family" data-goatcounter-title="Starring Your Family (Gumroad)">
+          <div class="cover"><img src="https://public-files.gumroad.com/86wj0nelm9wejy4araf8x873gsz0" alt="Cover of Starring Your Family: a Christmas whodunit casebook with your family as the suspects" width="1005" height="1005" loading="lazy"></div>
+          <div class="body">
+            <h3>Starring Your Family</h3>
+            <p>A Christmas whodunit casebook where your family are the suspects. Type 4 to 6 names and print
+            up to 40 logic-grid cases: who swapped the gift tags, who ate Santa&rsquo;s cookies.</p>
+            <span class="buy"><b>CA$17.90</b>On Gumroad</span>
+          </div>
+        </a>
+        <a class="book" href="https://goodworkbooks.gumroad.com/l/xbxlm" data-goatcounter-click="shop-christmas-crosswords" data-goatcounter-title="Christmas Crosswords (Gumroad)">
+          <div class="cover"><img src="https://public-files.gumroad.com/ef3j58pe58l9ksj7p1hkoblkttsf" alt="Cover of Christmas Crosswords: 10 holiday crossword puzzles, printable PDF" width="1005" height="1005" loading="lazy"></div>
+          <div class="body">
+            <h3>Christmas Crosswords</h3>
+            <p>Ten holiday crosswords, 151 clues, easy to medium, with answer keys. US Letter and A4 PDFs
+            included.</p>
+            <span class="buy"><b>CA$6</b>On Gumroad</span>
+          </div>
+        </a>
+        <a class="book" href="https://goodworkbooks.gumroad.com/l/vnfebw" data-goatcounter-click="shop-christmas-countdown" data-goatcounter-title="Christmas Countdown 24 word searches (Gumroad)">
+          <div class="cover"><img src="https://public-files.gumroad.com/leeoafzqzf11avselaqor3152ucw" alt="Cover of Christmas Countdown: 24 printable word searches, one for each day from December 1 to 24" width="1005" height="1005" loading="lazy"></div>
+          <div class="body">
+            <h3>Christmas Countdown</h3>
+            <p>24 word searches, one for each day from 1 to 24 December, each with its own answer key. A 40-page
+            PDF.</p>
+            <span class="buy"><b>CA$10</b>On Gumroad</span>
+          </div>
+        </a>
+        <a class="book" href="https://goodworkbooks.gumroad.com/l/sdjcc" data-goatcounter-click="shop-christmas-puzzle-night" data-goatcounter-title="Christmas Puzzle Night Bundle (Gumroad)">
+          <div class="cover"><img src="https://public-files.gumroad.com/mwj80okmtxxtbofuhw6v2cry0khx" alt="Cover of the Christmas Puzzle Night Bundle: a print-at-home escape room, 45 logic-grid cases and 3 word searches" width="1005" height="565" loading="lazy"></div>
+          <div class="body">
+            <h3>Christmas Puzzle Night Bundle</h3>
+            <p>An evening at the table in one download: a print-at-home escape room for one to six players,
+            45 logic-grid mystery cases set in a snowed-in country house, and 3 word searches.</p>
+            <span class="buy"><b>CA$16</b>On Gumroad</span>
+          </div>
+        </a>
+      </div>
+      <p class="fine">Prices are in Canadian dollars; Gumroad may show the amount in your own currency at checkout.
+      The words in these books (clues, stories and word lists) were written with an AI writing tool; the puzzles
+      themselves were built and checked by our own programs. Each product page has the full details.</p>
+    </div>
+  </section>
+
+  <section id="tees">
+    <div class="wrap">
+      <p class="eyebrow">Everhall crossword tees</p>
+      <h2>Every grid is a real crossword.</h2>
+      <p class="sub">The word runs down the middle and every answer across genuinely crosses it — built and
+      checked the same way as the daily puzzle. Gift designs for teachers, nurses, grandparents, golfers,
+      bakers and a hundred more are on sale now, and the Halloween designs have just landed.</p>
+      <div class="actions" style="margin:0 0 26px">
+        <a class="btn primary" href="https://www.teepublic.com/user/everhall" data-goatcounter-click="shop-teepublic-store" data-goatcounter-title="TeePublic store">Shop the tees on TeePublic</a>
+      </div>
+      <div class="tees">
+        <figure class="tee"><a href="https://www.teepublic.com/t-shirt/99139245-nurse-crossword-puzzle-grid-gift" data-goatcounter-click="shop-tee-nurse" data-goatcounter-title="Nurse crossword tee (TeePublic)"><img src="img/shirt-nurse.jpg" alt="White t-shirt printed with a crossword built on the word NURSE" width="630" height="630" loading="lazy"></a><figcaption>Nurse &mdash; on sale now</figcaption></figure>
+        <figure class="tee"><a href="https://www.teepublic.com/t-shirt/99138110-dad-crossword-puzzle-grid-gift" data-goatcounter-click="shop-tee-dad" data-goatcounter-title="Dad crossword tee (TeePublic)"><img src="img/shirt-dad.jpg" alt="White t-shirt printed with a crossword built on the word DAD" width="630" height="630" loading="lazy"></a><figcaption>Dad &mdash; on sale now</figcaption></figure>
+        <figure class="tee"><a href="https://www.teepublic.com/t-shirt/99138108-mom-crossword-puzzle-grid-gift" data-goatcounter-click="shop-tee-mom" data-goatcounter-title="Mom crossword tee (TeePublic)"><img src="img/shirt-mom.jpg" alt="White t-shirt printed with a crossword built on the word MOM" width="630" height="630" loading="lazy"></a><figcaption>Mom &mdash; on sale now</figcaption></figure>
+        <figure class="tee"><a href="https://www.teepublic.com/t-shirt/99138107-grandpa-crossword-puzzle-grid-gift" data-goatcounter-click="shop-tee-grandpa" data-goatcounter-title="Grandpa crossword tee (TeePublic)"><img src="img/shirt-grandpa.jpg" alt="White t-shirt printed with a crossword built on the word GRANDPA" width="630" height="630" loading="lazy"></a><figcaption>Grandpa &mdash; on sale now</figcaption></figure>
+      </div>
+      <p class="sub" style="margin-top:26px">Seasonal designs, printed on the same shirts. Thirteen Halloween grids are on TeePublic now; the Christmas set arrives there this week:</p>
+      <div class="tees">
+        <figure class="tee"><a href="https://www.teepublic.com/t-shirt/99573112-halloween-crossword-shirt-puzzle-lover-gift" data-goatcounter-click="shop-tee-halloween" data-goatcounter-title="Halloween crossword tee (TeePublic)"><img src="img/art-halloween.jpg" alt="Crossword design built on the word HALLOWEEN" width="630" height="630" loading="lazy"></a><figcaption>Halloween &mdash; on sale now</figcaption></figure>
+        <figure class="tee"><a href="https://www.teepublic.com/t-shirt/99573114-pumpkin-crossword-shirt-halloween-puzzle-lover-gif" data-goatcounter-click="shop-tee-pumpkin" data-goatcounter-title="Pumpkin crossword tee (TeePublic)"><img src="img/art-pumpkin.jpg" alt="Crossword design built on the word PUMPKIN" width="630" height="630" loading="lazy"></a><figcaption>Pumpkin &mdash; on sale now</figcaption></figure>
+        <figure class="tee" data-goatcounter-click="shop-tee-nutcracker-soon" data-goatcounter-title="Nutcracker tee, arriving (no link yet)"><img src="img/art-nutcracker.jpg" alt="Crossword design built on the word NUTCRACKER" width="630" height="630" loading="lazy"><figcaption>Nutcracker &mdash; arriving this week</figcaption></figure>
+        <figure class="tee" data-goatcounter-click="shop-tee-stocking-soon" data-goatcounter-title="Stocking tee, arriving (no link yet)"><img src="img/art-stocking.jpg" alt="Crossword design built on the word STOCKING" width="630" height="630" loading="lazy"><figcaption>Stocking &mdash; arriving this week</figcaption></figure>
+      </div>
+      <div class="actions" style="margin-top:20px">
+        <a class="btn ghost" href="https://www.teepublic.com/user/everhall?query=halloween" data-goatcounter-click="shop-tee-all-halloween" data-goatcounter-title="All Halloween tees (TeePublic)">All thirteen Halloween tees</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="nutcracker">
+    <div class="wrap nut">
+      <div class="gallery">
+        <figure class="photo main"><img src="img/nut-front.jpg" alt="The Everhall nutcracker in teal velvet, standing about six feet tall in a living room" width="630" height="1100"></figure>
+        <div class="details">
+          <figure><img src="img/nut-angle.jpg" alt="Three-quarter view showing the hand-painted face and faux-fur beard" width="354" height="800" loading="lazy"></figure>
+          <figure><img src="img/nut-coat.jpg" alt="Close-up of the teal velvet coat, gold braid, epaulettes and belt buckle" width="717" height="800" loading="lazy"></figure>
+          <figure><img src="img/nut-base.jpg" alt="Gold legs, black faux-fur boots and the square gold base" width="753" height="800" loading="lazy"></figure>
+        </div>
+        <p class="caveat">Real photos of one we made, in teal velvet.</p>
+      </div>
+      <div>
+        <p class="eyebrow">Featured this season</p>
+        <h2>The Everhall Guard</h2>
+        <p class="sub">Each winter one thing gets built by hand here, a few of them, to order.
+        This year it is a nutcracker.</p>
+        <p class="price">$399 <small>CAD · local pickup</small></p>
+
+        <ul class="facts">
+          <li><b>Height</b><span>About 6 ft, and 7 ft to the top of the hat</span></li>
+          <li><b>Coat</b><span>Teal velvet, with gold braid, epaulettes and cuffs</span></li>
+          <li><b>Face</b><span>Hand-painted</span></li>
+          <li><b>Trim</b><span>Faux-fur beard and hair, tall faux-fur hat, black faux-fur boots, gold legs</span></li>
+          <li><b>Base</b><span>Square gold base, stands on its own</span></li>
+          <li><b>Made</b><span>By hand, to order, a few each season</span></li>
+        </ul>
+
+        <p class="caveat">Every one is built and painted by hand to order, so yours will differ from the photos in the details.</p>
+
+        <p class="note">Indoors or on a covered porch only — the velvet and fur aren't made for rain or snow.
+        At this size it can't go by courier, so it's local pickup or delivery nearby.</p>
+
+        <div class="actions">
+          <a class="btn primary" data-goatcounter-click="shop-nutcracker-reserve" data-goatcounter-title="Nutcracker: reserve (email)" href="mailto:customerservice@everhall.ca?subject=Nutcracker%20reservation&amp;body=Where%20you%20are%20%28town%20or%20area%29%3A%0D%0AWhen%20you%20would%20like%20it%20by%3A%0D%0A%0D%0AAnything%20else%3A%0D%0A">Reserve one for Christmas</a>
+          <a class="btn ghost" data-goatcounter-click="shop-nutcracker-rent" data-goatcounter-title="Nutcracker: rent (email)" href="mailto:customerservice@everhall.ca?subject=Nutcracker%20rental&amp;body=Where%20you%20are%20%28town%20or%20area%29%3A%0D%0ADates%20you%20need%20it%3A%0D%0A%0D%0AWhat%20it%20is%20for%20%28shop%2C%20party%2C%20photos%29%3A%0D%0A">Ask about renting one</a>
+        </div>
+        <p class="how">Reserving is an email, not a payment. Tell us roughly where you are and when you would
+        like it, and we will write back with a build slot and a pickup date before anything is owed. Or just write to
+        <a href="mailto:customerservice@everhall.ca">customerservice@everhall.ca</a>.</p>
+      </div>
     </div>
   </section>
 
@@ -197,86 +329,6 @@ footer{font:500 .78rem/1.5 var(--sans);color:var(--ink-faint);padding:0 0 40px}
           <p>One thing made by hand, a few of it, and then it is done for the year. This winter it is a
           life-size nutcracker for the hall.</p>
         </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="tees">
-    <div class="wrap">
-      <p class="eyebrow">Everhall crossword tees</p>
-      <h2>Every grid is a real crossword.</h2>
-      <p class="sub">The word runs down the middle and every answer across genuinely crosses it — built and
-      checked the same way as the daily puzzle. Gift designs for teachers, nurses, grandparents, golfers,
-      bakers and a hundred more are on sale now, and the Halloween designs have just landed.</p>
-      <div class="actions" style="margin:0 0 26px">
-        <a class="btn primary" href="https://www.teepublic.com/user/everhall" data-gc="out-teepublic-store">Shop the tees on TeePublic</a>
-      </div>
-      <div class="tees">
-        <figure class="tee"><a href="https://www.teepublic.com/t-shirt/99139245-nurse-crossword-puzzle-grid-gift" data-gc="out-teepublic-nurse"><img src="img/shirt-nurse.jpg" alt="White t-shirt printed with a crossword built on the word NURSE" width="630" height="630" loading="lazy"></a><figcaption>Nurse &mdash; on sale now</figcaption></figure>
-        <figure class="tee"><a href="https://www.teepublic.com/t-shirt/99138110-dad-crossword-puzzle-grid-gift" data-gc="out-teepublic-dad"><img src="img/shirt-dad.jpg" alt="White t-shirt printed with a crossword built on the word DAD" width="630" height="630" loading="lazy"></a><figcaption>Dad &mdash; on sale now</figcaption></figure>
-        <figure class="tee"><a href="https://www.teepublic.com/t-shirt/99138108-mom-crossword-puzzle-grid-gift" data-gc="out-teepublic-mom"><img src="img/shirt-mom.jpg" alt="White t-shirt printed with a crossword built on the word MOM" width="630" height="630" loading="lazy"></a><figcaption>Mom &mdash; on sale now</figcaption></figure>
-        <figure class="tee"><a href="https://www.teepublic.com/t-shirt/99138107-grandpa-crossword-puzzle-grid-gift" data-gc="out-teepublic-grandpa"><img src="img/shirt-grandpa.jpg" alt="White t-shirt printed with a crossword built on the word GRANDPA" width="630" height="630" loading="lazy"></a><figcaption>Grandpa &mdash; on sale now</figcaption></figure>
-      </div>
-      <p class="sub" style="margin-top:26px">Seasonal designs, printed on the same shirts. Thirteen Halloween grids are on TeePublic now; the Christmas set arrives there this week:</p>
-      <div class="tees">
-        <figure class="tee"><a href="https://www.teepublic.com/t-shirt/99573112-halloween-crossword-shirt-puzzle-lover-gift" data-gc="out-teepublic-halloween"><img src="img/art-halloween.jpg" alt="Crossword design built on the word HALLOWEEN" width="630" height="630" loading="lazy"></a><figcaption>Halloween &mdash; on sale now</figcaption></figure>
-        <figure class="tee"><a href="https://www.teepublic.com/t-shirt/99573114-pumpkin-crossword-shirt-halloween-puzzle-lover-gif" data-gc="out-teepublic-pumpkin"><img src="img/art-pumpkin.jpg" alt="Crossword design built on the word PUMPKIN" width="630" height="630" loading="lazy"></a><figcaption>Pumpkin &mdash; on sale now</figcaption></figure>
-        <figure class="tee"><img src="img/art-nutcracker.jpg" alt="Crossword design built on the word NUTCRACKER" width="630" height="630" loading="lazy"><figcaption>Nutcracker &mdash; arriving this week</figcaption></figure>
-        <figure class="tee"><img src="img/art-stocking.jpg" alt="Crossword design built on the word STOCKING" width="630" height="630" loading="lazy"><figcaption>Stocking &mdash; arriving this week</figcaption></figure>
-      </div>
-      <div class="actions" style="margin-top:20px">
-        <a class="btn ghost" href="https://www.teepublic.com/user/everhall?query=halloween" data-gc="out-teepublic-all-halloween">All thirteen Halloween tees</a>
-      </div>
-    </div>
-  </section>
-
-  <section id="nutcracker">
-    <div class="wrap nut">
-      <div class="gallery">
-        <figure class="photo main"><img src="img/nut-front.jpg" alt="The Everhall nutcracker in teal velvet, standing about six feet tall in a living room" width="630" height="1100"></figure>
-        <div class="details">
-          <figure><img src="img/nut-angle.jpg" alt="Three-quarter view showing the hand-painted face and faux-fur beard" width="354" height="800" loading="lazy"></figure>
-          <figure><img src="img/nut-coat.jpg" alt="Close-up of the teal velvet coat, gold braid, epaulettes and belt buckle" width="717" height="800" loading="lazy"></figure>
-          <figure><img src="img/nut-base.jpg" alt="Gold legs, black faux-fur boots and the square gold base" width="753" height="800" loading="lazy"></figure>
-        </div>
-        <p class="caveat">Real photos of one we made, in teal velvet.</p>
-      </div>
-      <div>
-        <p class="eyebrow">Featured this season</p>
-        <h2>The Everhall Guard</h2>
-        <p class="sub">Each winter one thing gets built by hand here, a few of them, to order.
-        This year it is a nutcracker.</p>
-        <p class="price">$399 <small>CAD · local pickup</small></p>
-
-        <ul class="facts">
-          <li><b>Height</b><span>About 6 ft, and 7 ft to the top of the hat</span></li>
-          <li><b>Coat</b><span>Your choice of teal or plum velvet, or emerald or ruby sequin, with gold braid, epaulettes and cuffs</span></li>
-          <li><b>Face</b><span>Hand-painted</span></li>
-          <li><b>Trim</b><span>Faux-fur beard and hair, tall faux-fur hat, black faux-fur boots, gold legs</span></li>
-          <li><b>Base</b><span>Square gold base, stands on its own</span></li>
-          <li><b>Made</b><span>By hand, to order, a few each season</span></li>
-        </ul>
-
-        <h3 class="coats-h">Choose the coat</h3>
-        <div class="coats">
-          <figure><img src="img/coat-teal.jpg" alt="The Everhall nutcracker, coat digitally mocked up in a teal velvet coat" width="480" height="720" loading="lazy"><figcaption>Teal velvet</figcaption></figure>
-          <figure><img src="img/coat-plum.jpg" alt="The Everhall nutcracker, coat digitally mocked up in a plum velvet coat" width="480" height="720" loading="lazy"><figcaption>Plum velvet</figcaption></figure>
-          <figure><img src="img/coat-emerald.jpg" alt="The Everhall nutcracker, coat digitally mocked up in an emerald sequin coat" width="480" height="720" loading="lazy"><figcaption>Emerald sequin</figcaption></figure>
-          <figure><img src="img/coat-ruby.jpg" alt="The Everhall nutcracker, coat digitally mocked up in a ruby sequin coat" width="480" height="720" loading="lazy"><figcaption>Ruby sequin</figcaption></figure>
-        </div>
-        <p class="caveat">The teal coat is the one in the photos. The other three colours are digital mock-ups
-        of the same nutcracker. Every one is built and painted by hand to order, so yours will differ in the details.</p>
-
-        <p class="note">Indoors or on a covered porch only — the velvet and fur aren't made for rain or snow.
-        At this size it can't go by courier, so it's local pickup or delivery nearby.</p>
-
-        <div class="actions">
-          <a class="btn primary" data-gc="mailto-nutcracker-reserve" href="mailto:customerservice@everhall.ca?subject=Nutcracker%20reservation&amp;body=Which%20coat%3A%20teal%20velvet%20%2F%20plum%20velvet%20%2F%20emerald%20sequin%20%2F%20ruby%20sequin%0D%0AWhere%20you%20are%20%28town%20or%20area%29%3A%0D%0AWhen%20you%20would%20like%20it%20by%3A%0D%0A%0D%0AAnything%20else%3A%0D%0A">Reserve one for Christmas</a>
-          <a class="btn ghost" data-gc="mailto-nutcracker-rent" href="mailto:customerservice@everhall.ca?subject=Nutcracker%20rental&amp;body=Which%20coat%20you%20would%20like%3A%0D%0AWhere%20you%20are%20%28town%20or%20area%29%3A%0D%0ADates%20you%20need%20it%3A%0D%0A%0D%0AWhat%20it%20is%20for%20%28shop%2C%20party%2C%20photos%29%3A%0D%0A">Ask about renting one</a>
-        </div>
-        <p class="how">Reserving is an email, not a payment. Tell us the coat you want and roughly where you
-        are, and we will write back with a build slot and a pickup date before anything is owed. Or just write to
-        <a href="mailto:customerservice@everhall.ca">customerservice@everhall.ca</a>.</p>
       </div>
     </div>
   </section>
@@ -339,20 +391,8 @@ footer{font:500 .78rem/1.5 var(--sans);color:var(--ink-faint);padding:0 0 40px}
   start();
 })();
 
-/* anonymous aggregate counts (GoatCounter: no cookies, no IDs). Links carrying data-gc
-   report one event when followed, e.g. out-teepublic-halloween; middle-clicks count too. */
-(function () {
-  function out(e) {
-    if (e.type === 'auxclick' && e.button !== 1) return;
-    var a = e.target && e.target.closest ? e.target.closest('a[data-gc]') : null;
-    if (!a) return;
-    var name = a.getAttribute('data-gc'), img = a.querySelector('img');
-    var title = a.textContent.replace(/\s+/g, ' ').trim() || (img && img.alt) || name;
-    try { if (window.goatcounter && goatcounter.count) goatcounter.count({ path: name, title: title, event: true }); } catch (err) {}
-  }
-  document.addEventListener('click', out);
-  document.addEventListener('auxclick', out);
-})();
+/* Outbound clicks are counted by GoatCounter itself (no cookies, no IDs): count.js binds every
+   element carrying data-goatcounter-click and reports it as an event named shop-<slug>. */
 </script>
 <script data-goatcounter="https://everhall.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
