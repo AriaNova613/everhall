@@ -439,3 +439,41 @@ export const initials = person => {
   const source = (person?.display_name || person?.email || '?').trim();
   return ([...source][0] || '?').toUpperCase();
 };
+
+/* ---------------------------------------------------------------------------
+   Sign-in links
+
+   Two kinds of link can be pasted into the installed iPhone app, which cannot
+   receive an email link any other way:
+
+     - the hand-over Safari copies after following the email. It carries the
+       session itself in the fragment: #access_token=…&refresh_token=…
+     - the raw link out of the email, which points at Supabase's
+       /auth/v1/verify with a one-time token hash in the query. Nobody has
+       followed it yet, so the app can redeem it directly.
+
+   Anything else is null. Mail and Messages sometimes wrap a copied link in
+   angle brackets or carry a word either side of it, so the URL is looked for
+   rather than assumed to be the whole of the text.
+   --------------------------------------------------------------------------- */
+
+const VERIFY_TYPES = new Set(['magiclink', 'signup', 'invite', 'email']);
+
+export function parseSignInLink(text) {
+  const found = String(text ?? '').match(/https?:\/\/[^\s<>"']+/);
+  if (!found) return null;
+  let url;
+  try { url = new URL(found[0].replace(/[).,;]+$/, '')); } catch { return null; }
+
+  const frag = new URLSearchParams(url.hash.replace(/^#/, ''));
+  const access_token = frag.get('access_token');
+  const refresh_token = frag.get('refresh_token');
+  if (access_token && refresh_token) return { kind: 'session', access_token, refresh_token };
+
+  const token_hash = url.searchParams.get('token');
+  if (token_hash && /\/auth\/v1\/verify\/?$/.test(url.pathname)) {
+    const type = url.searchParams.get('type');
+    return { kind: 'verify', token_hash, type: VERIFY_TYPES.has(type) ? type : 'email' };
+  }
+  return null;
+}

@@ -24,7 +24,7 @@
         `TypeError: Failed to fetch` is not an error message, it is a shrug.
    =========================================================================== */
 
-import { todayISO, shiftISO } from './core.js';
+import { todayISO, shiftISO, parseSignInLink } from './core.js';
 
 const PAGE = 1000;          // PostgREST's default cap; asking for more is pointless
 const MAX_PAGES = 40;       // a backstop, not a limit anyone should reach
@@ -325,13 +325,20 @@ export function subscribe({ onCheckins, onProfiles, onStatus }) {
  * Ask for a sign-in email. The same request produces both the link and the
  * six-digit code — they are the same token, and which one the person uses
  * depends only on what the email template shows them.
+ *
+ * `forApp` is for an installed iPhone app, whose link will open in Safari
+ * instead. The `?for=app` it adds tells that Safari page to hand the sign-in
+ * back rather than keep it — see showHandoff in app.js. The redirect allow-list
+ * (`https://everhall.ca/workout/**`) already covers the query string; if it
+ * ever stopped doing so, Supabase would fall back to the Site URL and Safari
+ * would simply sign itself in, as it always used to.
  */
-export async function requestSignIn(email) {
+export async function requestSignIn(email, { forApp = false } = {}) {
   const { error } = await state.supa.auth.signInWithOtp({
     email,
     options: {
       shouldCreateUser: true,
-      emailRedirectTo: location.origin + location.pathname,
+      emailRedirectTo: location.origin + location.pathname + (forApp ? '?for=app' : ''),
     },
   });
   if (error) throw signInError(error);
@@ -355,26 +362,22 @@ export async function signInWithGoogle() {
 }
 
 /**
- * The escape hatch for an installed iPhone app, where a link tapped in Mail
- * opens Safari and the session lands in storage the app cannot see. Because
- * the implicit flow carries the tokens in the URL fragment, pasting the link
- * into the app is enough to finish the job.
+ * Sign in the installed iPhone app from a pasted link, which is the only way a
+ * sign-in can reach it: a link tapped in Mail opens Safari, and the home-screen
+ * app's storage is its own. Accepts both the hand-over Safari copies (the
+ * session itself, in the fragment) and the untouched link from the email
+ * (redeemed here, so its one use lands in this app rather than in Safari).
  */
 export async function signInWithPastedLink(pasted) {
-  let hash = '';
-  try {
-    hash = new URL(String(pasted).trim()).hash.replace(/^#/, '');
-  } catch {
-    throw new AppError('That does not look like a sign-in link.');
+  const link = parseSignInLink(pasted);
+  if (!link) {
+    throw new AppError('That does not look like a sign-in link. It has to be the whole link, from https to the very end.');
   }
-  const params = new URLSearchParams(hash);
-  const access_token = params.get('access_token');
-  const refresh_token = params.get('refresh_token');
-  if (!access_token || !refresh_token) {
-    throw new AppError('That link has no sign-in details in it. Copy the whole link from the email.');
-  }
-  const { data, error } = await state.supa.auth.setSession({ access_token, refresh_token });
+  const { data, error } = link.kind === 'session'
+    ? await state.supa.auth.setSession({ access_token: link.access_token, refresh_token: link.refresh_token })
+    : await state.supa.auth.verifyOtp({ token_hash: link.token_hash, type: link.type });
   if (error) throw signInError(error);
+  if (!data?.session) throw new AppError('That link did not sign you in. Ask for a new email and try again.');
   return data.session;
 }
 

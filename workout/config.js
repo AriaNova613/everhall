@@ -32,8 +32,8 @@ window.CHECKMARK_CONFIG = {
      which needs custom SMTP first. See docs/SETUP.md -> "Better email".
 
      This matters most on an iPhone: an installed home-screen app has storage
-     separate from Safari and cannot receive a link at all, so until this is
-     true, an iPhone has to be signed in from Safari — or the sign-in link
-     pasted into the app by hand, which the app offers as a fallback. */
+     separate from Safari and cannot receive a link at all. Until this is true,
+     Safari hands the sign-in back to the app by copy and paste instead — see
+     showHandoff in app.js. A code would make that step unnecessary. */
   EMAIL_HAS_CODE: false,
 };

@@ -22,6 +22,7 @@ import {
   COLOR_SLOTS, colorVar,
   prepareSeries, latestEntry, weightSummary, sparklineGeometry, describeSeries,
   displayWeight, displayDelta, parseWeightInput, gramsFrom, WEIGHT_INPUT_RANGE,
+  parseSignInLink,
 } from './core.js';
 
 import * as db from './data.js';
@@ -174,6 +175,13 @@ async function main() {
     );
   }
 
+  /* An email link asked for from the installed iPhone app, which iOS opened
+     here in Safari instead. The session in the fragment belongs to the app, so
+     it is lifted off the URL before the SDK can consume it. Letting Safari sign
+     in with it as well would leave two holders of one refresh token, and the
+     first to refresh would get the other revoked. */
+  const handoff = takeHandoff();
+
   db.createClient(CFG);
 
   /* Register the worker here rather than after sign-in.
@@ -183,6 +191,8 @@ async function main() {
      installed for exactly the person being told to add the app to their home
      screen. */
   registerServiceWorker();
+
+  if (handoff) return showHandoff(handoff);
 
   /* A sign-in that came back from an email link or from Google arrives as a
      fragment on the URL. Surface a failure rather than silently showing the
@@ -220,7 +230,19 @@ async function main() {
   });
 }
 
-const cleanUrl = () => history.replaceState({}, '', location.pathname + location.search.replace(/[?&](code|error|error_description)=[^&]*/g, '').replace(/^&/, '?'));
+const cleanUrl = () => history.replaceState({}, '', location.pathname + location.search.replace(/[?&](code|error|error_description|for)=[^&]*/g, '').replace(/^&/, '?'));
+
+/** The sign-in link meant for the installed app, if this page is carrying one. */
+function takeHandoff() {
+  if (PLATFORM.standalone) return null;
+  if (new URLSearchParams(location.search).get('for') !== 'app') return null;
+  const frag = new URLSearchParams(location.hash.replace(/^#/, ''));
+  if (!frag.get('access_token') || !frag.get('refresh_token')) return null;
+  const link = location.origin + location.pathname + location.hash;
+  // Off the address bar too, so the tokens are not left sitting in history.
+  history.replaceState({}, '', location.pathname);
+  return link;
+}
 
 /* ===========================================================================
    Gate screens
@@ -257,11 +279,13 @@ function showOffline() {
 /**
  * Sign in.
  *
- * The six-digit code is offered beside the link rather than behind it,
- * because on an installed iPhone app the link cannot work at all: a link
+ * On an installed iPhone app the email link cannot sign in directly: a link
  * tapped in Mail opens Safari, and an iOS home-screen app has its own storage
- * that Safari's session never reaches. There is no way to route the link back.
- * So the code is the primary path there, and the app says so.
+ * that Safari's session never reaches. So the link is asked for with a marker
+ * on it, Safari hands the sign-in over instead of keeping it (showHandoff),
+ * and the app takes it from the clipboard with one tap (pasteSignIn). Once the
+ * app has a session it keeps it, so this happens once per phone. A six-digit
+ * code, when the email carries one, makes all of that unnecessary.
  */
 function showSignIn({ error = '', prefill = '', sent = false, email = '' } = {}) {
   const installedOnIOS = PLATFORM.ios && PLATFORM.standalone;
@@ -284,7 +308,7 @@ function showSignIn({ error = '', prefill = '', sent = false, email = '' } = {})
     sendBtn.disabled = true;
     mount(sendBtn, el('span', { class: 'spin' }), el('span', { text: 'Sending' }));
     try {
-      await db.requestSignIn(address);
+      await db.requestSignIn(address, { forApp: installedOnIOS && !hasCode });
       showCodeEntry(address);
     } catch (e) {
       showSignIn({ error: e.message, prefill: address });
@@ -325,7 +349,10 @@ function showSignIn({ error = '', prefill = '', sent = false, email = '' } = {})
        work, that dead end has to be named rather than papered over. */
     installedOnIOS && !hasCode
       ? el('div', { class: 'msg' },
-        el('span', { text: 'On an iPhone the link in the email opens Safari, not this app, so it cannot sign you in here. Sign in from Safari instead — or send the email, then use “Trouble signing in?” to paste the link straight in.' }))
+        el('span', { text: 'On an iPhone the link in the email opens in Safari, not here. Safari will give you your sign-in to copy — bring it back and tap Paste sign-in. This phone only needs it once.' }))
+      : null,
+    installedOnIOS && !hasCode
+      ? el('button', { class: 'btn btn--ghost btn--wide', type: 'button', text: 'Paste sign-in', onclick: () => pasteSignIn((emailField.value || '').trim().toLowerCase()) })
       : el('p', {
         class: 'fineprint',
         text: hasCode
@@ -383,6 +410,7 @@ function showCodeEntry(email, message = '') {
   const verifyBtn = el('button', { class: 'btn btn--primary btn--wide', type: 'button', text: 'Sign in', onclick: submit });
 
   const hasCode = CFG.EMAIL_HAS_CODE === true;
+  const handingOver = !hasCode && PLATFORM.ios && PLATFORM.standalone;
 
   /* Six empty boxes that can never be filled are worse than no boxes at all.
      While the email carries only a link, this screen says one thing and asks
@@ -395,7 +423,15 @@ function showCodeEntry(email, message = '') {
       class: 'gate__lede',
       text: hasCode ? `We sent a code to ${email}.` : `We sent a sign-in link to ${email}.`,
     }),
-    hasCode ? null : el('div', { class: 'msg msg--ok', text: 'Tap the link in that email and you are in. You should not have to do this again on this device.' }),
+    hasCode ? null : el('div', {
+      class: 'msg msg--ok',
+      text: handingOver
+        ? 'Tap the link in that email. It opens in Safari: tap Copy sign-in for the app there, then come back here and tap Paste sign-in.'
+        : 'Tap the link in that email and you are in. You should not have to do this again on this device.',
+    }),
+    handingOver
+      ? el('button', { class: 'btn btn--primary btn--wide', type: 'button', text: 'Paste sign-in', onclick: () => pasteSignIn(email) })
+      : null,
     hasCode ? el('div', { class: 'fgroup' },
       el('span', { class: 'cap', text: 'Six-digit code' }),
       el('div', { class: 'otp' }, boxes),
@@ -413,12 +449,36 @@ function showCodeEntry(email, message = '') {
 }
 
 /**
- * The last resort, for an installed iPhone app whose owner cannot get a code
- * to arrive. Because the app uses the implicit flow, the sign-in link carries
- * its tokens in the fragment, so pasting the link in is enough.
+ * The installed app's half of the hand-over: read what Safari copied and sign
+ * in with it. iOS asks before letting a page read the clipboard, so this has
+ * to hang off a tap; if the answer is no, the paste field still works.
+ */
+async function pasteSignIn(email) {
+  let text = '';
+  try {
+    text = await navigator.clipboard.readText();
+  } catch {
+    return showPasteLink(email);
+  }
+  if (!parseSignInLink(text)) {
+    return toast('Nothing to paste yet. Tap the link in the email first, then Copy sign-in for the app in Safari.', { error: true });
+  }
+  try {
+    const session = await db.signInWithPastedLink(text);
+    // The clipboard is holding a sign-in; do not leave it there if iOS allows.
+    navigator.clipboard.writeText('').catch(() => {});
+    await enterApp(session);
+  } catch (e) {
+    toast(e.message, { error: true });
+  }
+}
+
+/**
+ * The paste field, for when reading the clipboard is refused. Takes the
+ * hand-over from Safari or the untouched link from the email.
  */
 function showPasteLink(email) {
-  const field = el('input', { class: 'field', type: 'url', placeholder: 'Paste the link from the email', 'aria-label': 'The sign-in link from your email' });
+  const field = el('input', { class: 'field', type: 'url', placeholder: 'Paste the link here', 'aria-label': 'The sign-in link' });
   const go = async () => {
     try {
       const session = await db.signInWithPastedLink(field.value);
@@ -429,10 +489,65 @@ function showPasteLink(email) {
   };
   showGate(
     el('h1', { text: 'Paste the link instead', tabindex: '-1' }),
-    el('p', { class: 'gate__lede', text: 'In the email, press and hold the sign-in link, choose Copy Link, then paste it here.' }),
+    el('p', { class: 'gate__lede', text: 'Paste the sign-in Safari copied for you. Or, in the email, press and hold the sign-in link, choose Copy, and paste that.' }),
     el('div', { class: 'stack' }, field, el('button', { class: 'btn btn--primary btn--wide', type: 'button', text: 'Sign in', onclick: go })),
-    el('p', { class: 'fineprint', text: 'This works because the link carries your sign-in details in the part after the # — which is why it has to be the whole link.' }),
-    el('button', { class: 'linkq', type: 'button', text: 'Back', onclick: () => showCodeEntry(email) }),
+    el('p', { class: 'fineprint', text: 'It has to be the whole link, from https to the very end.' }),
+    el('button', { class: 'linkq', type: 'button', text: 'Back', onclick: () => email ? showCodeEntry(email) : showSignIn({}) }),
+  );
+}
+
+/**
+ * Safari's half of signing in the installed iPhone app.
+ *
+ * Somebody asked for the email from the home-screen icon, and iOS opened the
+ * link here, in storage the icon cannot see. So this page does not sign in.
+ * It offers the sign-in to be copied and carried back, which the app reads
+ * with one tap. That is the whole of the crossing; after it the app keeps its
+ * own session like any other.
+ */
+function showHandoff(link, copied = false) {
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(link);
+      showHandoff(link, true);
+    } catch {
+      showHandoffByHand(link);
+    }
+  };
+  const here = el('button', {
+    class: 'linkq', type: 'button', text: 'Use the board here in Safari instead',
+    onclick: async () => {
+      try { await enterApp(await db.signInWithPastedLink(link)); } catch (e) { toast(e.message, { error: true }); }
+    },
+  });
+
+  if (copied) {
+    return showGate(
+      el('h1', { text: 'Copied', tabindex: '-1' }),
+      el('p', { class: 'gate__lede', text: 'Now open Carr Athletics from your Home Screen and tap Paste sign-in. That is the last time it will ask.' }),
+      el('button', { class: 'btn btn--ghost btn--wide', type: 'button', text: 'Copy it again', onclick: copy }),
+      here,
+    );
+  }
+
+  showGate(
+    el('h1', { text: 'One more step', tabindex: '-1' }),
+    el('p', { class: 'gate__lede', text: 'You asked from the Carr Athletics icon on your Home Screen, but an iPhone opens email links here in Safari, which the icon cannot see. Copy your sign-in and take it back.' }),
+    el('button', { class: 'btn btn--primary btn--wide', type: 'button', text: 'Copy sign-in for the app', onclick: copy }),
+    el('p', { class: 'fineprint', text: 'It signs in as you, so it only belongs in the app.' }),
+    here,
+  );
+}
+
+/** Copying refused: put the link where it can be selected by hand. */
+function showHandoffByHand(link) {
+  const field = el('input', { class: 'field', type: 'text', readonly: true, value: link, 'aria-label': 'Your sign-in for the app' });
+  field.addEventListener('focus', () => field.select());
+  showGate(
+    el('h1', { text: 'Copy this by hand', tabindex: '-1' }),
+    el('p', { class: 'gate__lede', text: 'Press and hold the box, choose Select All, then Copy. Open Carr Athletics from your Home Screen and tap Paste sign-in.' }),
+    field,
+    el('button', { class: 'linkq', type: 'button', text: 'Back', onclick: () => showHandoff(link) }),
   );
 }
 
@@ -1844,7 +1959,7 @@ function installCardContent(canPrompt) {
     );
     return [head, steps, el('p', {
       class: 'install__note',
-      text: 'An iPhone keeps the icon and Safari separate, so the new icon will ask you to sign in once of its own. Tap “Trouble signing in?” there and paste the link from your email.',
+      text: 'An iPhone keeps the icon and Safari separate, so the new icon will ask you to sign in once of its own. Ask for the email from the icon; when the link opens in Safari, copy your sign-in there and paste it back.',
     }), el('div', { class: 'install__foot' },
       el('button', { class: 'btn btn--ghost', type: 'button', text: 'Not now', onclick: dismissInstall }),
     )];
