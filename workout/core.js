@@ -383,7 +383,8 @@ export function describeSeries(series, unit, today) {
 export const TAG_GROUPS = [
   { name: 'Cardio', tags: [
     ['run', 'Run'], ['walk', 'Walk / Hike'], ['bike', 'Bike'], ['swim', 'Swim'],
-    ['row', 'Row'], ['machine', 'Machine'], ['sport', 'Sport'], ['hiit', 'HIIT'],
+    ['row', 'Row'], ['machine', 'Machine'], ['hockey', 'Hockey'], ['sport', 'Sport'],
+    ['hiit', 'HIIT'],
   ] },
   { name: 'Resistance', tags: [
     ['chest', 'Chest'], ['back', 'Back'], ['shoulders', 'Shoulders'],
