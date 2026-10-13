@@ -403,6 +403,24 @@ export const MAX_TAGS = 12;
 /** Display-only. An unknown slug from the database still renders as itself. */
 export const tagLabel = slug => TAG_LABEL[slug] || slug;
 
+/* What kind of day a set of tags makes, for anybody who colours their
+   calendar by workout. Read from the groups by name, so moving a tag between
+   groups above recolours it with no second list to keep in step. Doing both in
+   one day is its own answer rather than a tie to break; untagged days and
+   days of only "Other" share the neutral colour, because the check is the
+   point and tags are optional. */
+const slugsIn = name => new Set(TAG_GROUPS.find(g => g.name === name)?.tags.map(([slug]) => slug) || []);
+const CARDIO = slugsIn('Cardio');
+const RESISTANCE = slugsIn('Resistance');
+
+export function dayKind(tags) {
+  const list = Array.isArray(tags) ? tags : [];
+  const cardio = list.some(t => CARDIO.has(t));
+  const resistance = list.some(t => RESISTANCE.has(t));
+  if (cardio && resistance) return 'both';
+  return cardio ? 'cardio' : resistance ? 'resistance' : 'other';
+}
+
 /* ---------------------------------------------------------------------------
    Person colours
 

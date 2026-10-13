@@ -86,6 +86,15 @@
   --c-emerald:#9AC46E;     /* moss */
   --c-sky:#CDE7F2;         /* ice */
   --c:var(--c-indigo);     /* cascading default, overridden per container */
+
+  /* --- workout colours ---------------------------------------------------
+     For whoever colours their calendars by workout instead of by person.
+     Held to the same bars as the person slots (a fill with ink struck on it,
+     a graphic on a panel), kept well apart from each other and from both
+     signal colours. tools/check-contrast.mjs measures all of it. */
+  --k-cardio:#F0A04B;      /* ember */
+  --k-resistance:#7FB2F0;  /* steel blue */
+  --k-other:#9C9488;       /* stone — untagged, or only "Other" tags */
   --on-c:var(--ground);    /* ink drawn ON a person fill — always the ground */
 
   /* --- type ------------------------------------------------------------- */
@@ -464,6 +473,13 @@ svg{display:block}
 .cell.is-on{background:var(--c);border-color:transparent;color:var(--on-c)}
 .cell.is-on .cell__n{position:absolute;top:3px;left:5px;font-size:9.5px;font-weight:700;color:rgba(11,10,9,.62)}
 .cell__ck{width:50%;height:50%;stroke-width:3;color:var(--on-c)}
+/* Colouring by workout. Setting --c on the cell itself overrides the person
+   colour it would otherwise inherit from its plate, so every rule that draws
+   with --c follows along without being repeated here. */
+.is-on.k-cardio,.on.k-cardio{--c:var(--k-cardio)}
+.is-on.k-resistance,.on.k-resistance{--c:var(--k-resistance)}
+.is-on.k-other,.on.k-other{--c:var(--k-other)}
+.cell.is-on.k-both,.wd.is-on.k-both{background:linear-gradient(135deg,var(--k-cardio) 50%,var(--k-resistance) 50%)}
 .cell__tag{
   position:absolute;bottom:4px;left:50%;transform:translateX(-50%);
   width:4px;height:1px;background:var(--on-c);
@@ -488,6 +504,19 @@ svg{display:block}
 .mini{display:flex;gap:1px;flex:1;min-width:0;align-items:center;height:16px}
 .mini i{display:block;width:3px;height:11px;border-radius:.5px;background:var(--line-2);flex:none}
 .mini i.on{height:15px;background:var(--c)}
+.mini i.on.k-both{background:linear-gradient(180deg,var(--k-cardio) 50%,var(--k-resistance) 50%)}
+
+.klegend{
+  display:flex;flex-wrap:wrap;gap:6px 14px;margin:var(--s4) 0 var(--s2);
+  font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-2);
+}
+.klegend>span{display:inline-flex;align-items:center;gap:6px}
+.kdot{display:inline-block;width:10px;height:10px;border-radius:2px;flex:none;vertical-align:-1px}
+.cap .kdot{margin-right:7px}
+.kdot.k-cardio{background:var(--k-cardio)}
+.kdot.k-resistance{background:var(--k-resistance)}
+.kdot.k-other{background:var(--k-other)}
+.kdot.k-both{background:linear-gradient(135deg,var(--k-cardio) 50%,var(--k-resistance) 50%)}
 .irow__c{font-family:var(--display);font-weight:800;font-size:20px;font-variant-numeric:tabular-nums;color:var(--text-1);flex:none}
 .irow__c span{font-family:var(--ui);font-size:10.5px;font-weight:600;letter-spacing:.12em;color:var(--text-2);margin-left:4px;text-transform:uppercase}
 .irow>svg{width:13px;height:13px;color:var(--text-2);flex:none}

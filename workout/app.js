@@ -18,7 +18,7 @@ import {
   todayISO, shiftISO, daysBetween, dayNum, fromISO, longDate, prettyDate, relativeDay,
   daysInMonth, weekDays, DOW_LONG, DOW_MIN, MONTHS, MONTHS_SHORT, pad,
   currentStreak, bestStreak, countMonth,
-  TAG_GROUPS, tagLabel, MAX_TAGS,
+  TAG_GROUPS, tagLabel, MAX_TAGS, dayKind,
   COLOR_SLOTS, colorVar,
   prepareSeries, latestEntry, weightSummary, sparklineGeometry, describeSeries,
   displayWeight, displayDelta, parseWeightInput, gramsFrom, WEIGHT_INPUT_RANGE,
@@ -135,6 +135,28 @@ const state = {
 
 const ckey = (uid, day) => `${uid}|${day}`;
 const getCheckin = (uid, day) => state.checkins.get(ckey(uid, day));
+
+/* ------------------------------------------------- colouring by workout */
+
+/* A viewing preference: it recolours every calendar on THIS person's screen
+   and nobody else's, so one screen never mixes person colours with workout
+   colours. Off, nothing below adds a class and the board is unchanged. */
+const byWorkout = () => state.me?.color_by_workout === true;
+
+/** The class for a logged day's colour, or null while colouring by person. */
+const kindClass = (uid, day) => (byWorkout() ? `k-${dayKind(getCheckin(uid, day)?.tags)}` : null);
+
+const KINDS = [['cardio', 'Cardio'], ['resistance', 'Resistance'], ['both', 'Both'], ['other', 'Other or none']];
+
+/** What the colours mean, shown wherever they appear. Nothing while off. */
+function kindLegend() {
+  if (!byWorkout()) return null;
+  return el('div', { class: 'klegend', 'aria-hidden': 'true' },
+    KINDS.map(([kind, label]) => el('span', {},
+      el('i', { class: `kdot k-${kind}` }),
+      el('span', { text: label }),
+    )));
+}
 
 /** The set of days one person has checked off. Rebuilt when check-ins load. */
 const dayIndex = new Map();
@@ -1002,6 +1024,8 @@ function renderWeek(today) {
         cell.setAttribute('aria-label', `${person.name}: has not joined`);
       } else if (logged) {
         cell.classList.add('is-on');
+        const kind = kindClass(person.id, day);
+        if (kind) cell.classList.add(kind);
         add(cell, icon('check'));
         cell.setAttribute('aria-label', isMe
           ? `${longDate(day)}: logged. Edit`
@@ -1035,7 +1059,7 @@ function renderWeek(today) {
     return row;
   });
 
-  mount($('#weekCard'), header, rows);
+  mount($('#weekCard'), header, rows, kindLegend());
 }
 
 /** A bar showing the week so far with a marker where this person's target is. */
@@ -1079,7 +1103,7 @@ function renderMonth() {
   }));
 
   mount($('#plates'), state.people.map(person => monthPlate(person, y, m)));
-  mount($('#indexList'), monthIndex(y, m));
+  mount($('#indexList'), kindLegend(), monthIndex(y, m));
   requestAnimationFrame(moveRailInk);
 }
 
@@ -1160,7 +1184,7 @@ function calendar(person, y, m, set, today, isMe) {
     const row = state.checkins.get(ckey(person.id, iso));
 
     const classes = ['cell'];
-    if (on) classes.push('is-on');
+    if (on) classes.push('is-on', kindClass(person.id, iso));
     if (future) classes.push('is-future');
     else if (isMe) classes.push('is-edit');
     if (iso === today) classes.push('is-today');
@@ -1172,7 +1196,7 @@ function calendar(person, y, m, set, today, isMe) {
     ].filter(Boolean).join(', ');
 
     const cell = el(future ? 'div' : 'button', {
-      class: classes.join(' '),
+      class: classes.filter(Boolean).join(' '),
       role: 'gridcell',
       tabindex: '-1',
       'aria-label': label,
@@ -1229,7 +1253,7 @@ function monthIndex(y, m) {
     const ticks = [];
     for (let d = 1; d <= total; d++) {
       const iso = `${y}-${pad(m + 1)}-${pad(d)}`;
-      ticks.push(el('i', { class: set.has(iso) ? 'on' : '' }));
+      ticks.push(el('i', { class: set.has(iso) ? ['on', kindClass(person.id, iso)].filter(Boolean).join(' ') : '' }));
     }
     const count = person.joined ? countMonth(set, y, m) : null;
     const row = paint(el('button', {
@@ -1620,8 +1644,11 @@ function openDayEditor(iso) {
       'aria-pressed': tags.has(slug) ? 'true' : 'false',
       data: { tag: slug },
     }));
+    const kind = { Cardio: 'cardio', Resistance: 'resistance' }[group.name];
     return el('div', { class: 'fgroup' },
-      el('span', { class: 'cap', text: group.name }),
+      el('span', { class: 'cap' },
+        byWorkout() && kind ? el('i', { class: `kdot k-${kind}`, 'aria-hidden': 'true' }) : null,
+        el('span', { text: group.name })),
       el('div', { class: 'taggrid' }, buttons),
     );
   });
@@ -1800,11 +1827,25 @@ function openSettings() {
     add(targetRow, button);
   }
 
+  let colorByWorkout = me.color_by_workout === true;
+  const schemeButtons = [[false, 'By person'], [true, 'By workout']].map(([value, label]) => el('button', {
+    class: 'tagb', type: 'button', text: label,
+    'aria-pressed': value === colorByWorkout ? 'true' : 'false',
+    onclick: () => {
+      colorByWorkout = value;
+      schemeButtons.forEach((b, i) => b.setAttribute('aria-pressed', (i === 1) === value ? 'true' : 'false'));
+    },
+  }));
+
   const body = el('div', {},
     el('div', { class: 'fgroup' }, el('span', { class: 'cap', text: 'Display name' }), nameField),
     el('div', { class: 'fgroup' },
       el('span', { class: 'cap', text: 'Days a week I am aiming for' }), targetRow,
       el('p', { class: 'hint hint--left', text: 'Everyone sets their own. Yours is what the week strip and the seal measure you against.' })),
+    el('div', { class: 'fgroup' },
+      el('span', { class: 'cap', text: 'Colour the calendars' }),
+      el('div', { class: 'taggrid' }, schemeButtons),
+      el('p', { class: 'hint hint--left', text: 'By workout: cardio orange, resistance blue, a day of both split corner to corner, anything else grey. It only changes what you see — everyone else keeps their own colours.' })),
     el('div', { class: 'fgroup' },
       el('span', { class: 'cap', text: 'This device' }),
       el('div', { class: 'wfoot wfoot--plain' },
@@ -1832,6 +1873,7 @@ function openSettings() {
         const updated = await db.saveProfile(me.id, {
           display_name: nameField.value.trim().slice(0, 40) || me.email.split('@')[0],
           weekly_target: target,
+          color_by_workout: colorByWorkout,
         });
         state.me = updated;
         await reloadPeople();
