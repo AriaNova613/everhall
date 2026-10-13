@@ -138,19 +138,20 @@ const getCheckin = (uid, day) => state.checkins.get(ckey(uid, day));
 
 /* ------------------------------------------------- colouring by workout */
 
-/* A viewing preference: it recolours every calendar on THIS person's screen
-   and nobody else's, so one screen never mixes person colours with workout
-   colours. Off, nothing below adds a class and the board is unchanged. */
-const byWorkout = () => state.me?.color_by_workout === true;
+/* A logged day is coloured by what was done — cardio, resistance, both, or
+   anything else — on every calendar, for everyone. People are told apart by
+   name, not colour, which is why there are no coloured name dots anywhere: a
+   dot in Kaden's amber would read as "cardio". (Kaden's idea, made the norm
+   in October 2026. profiles.color_by_workout is left over from the week it
+   was a setting; nothing reads it.) */
 
-/** The class for a logged day's colour, or null while colouring by person. */
-const kindClass = (uid, day) => (byWorkout() ? `k-${dayKind(getCheckin(uid, day)?.tags)}` : null);
+/** The class for a logged day's colour. */
+const kindClass = (uid, day) => `k-${dayKind(getCheckin(uid, day)?.tags)}`;
 
 const KINDS = [['cardio', 'Cardio'], ['resistance', 'Resistance'], ['both', 'Both'], ['other', 'Other or none']];
 
-/** What the colours mean, shown wherever they appear. Nothing while off. */
+/** What the colours mean, shown wherever they appear. */
 function kindLegend() {
-  if (!byWorkout()) return null;
   return el('div', { class: 'klegend', 'aria-hidden': 'true' },
     KINDS.map(([kind, label]) => el('span', {},
       el('i', { class: `kdot k-${kind}` }),
@@ -975,7 +976,6 @@ function renderFamily(today) {
     }
 
     add(row, 
-      el('span', { class: 'dot' + (person.joined ? '' : ' dot--ring'), 'aria-hidden': 'true' }),
       el('span', { class: 'rrow__n', text: person.name }),
       stateNode,
     );
@@ -1024,8 +1024,7 @@ function renderWeek(today) {
         cell.setAttribute('aria-label', `${person.name}: has not joined`);
       } else if (logged) {
         cell.classList.add('is-on');
-        const kind = kindClass(person.id, day);
-        if (kind) cell.classList.add(kind);
+        cell.classList.add(kindClass(person.id, day));
         add(cell, icon('check'));
         cell.setAttribute('aria-label', isMe
           ? `${longDate(day)}: logged. Edit`
@@ -1046,7 +1045,6 @@ function renderWeek(today) {
     const row = paint(el('div', { class: 'wrow' }), person.color);
     add(row, 
       el('div', { class: 'wrow__hd' },
-        el('span', { class: 'dot' + (person.joined ? '' : ' dot--ring'), 'aria-hidden': 'true' }),
         el('span', { class: 'wrow__n', text: person.name }),
         el('span', { class: 'wrow__c' + (met ? ' met' : '') },
           el('b', { text: person.joined ? String(done) : '—' }),
@@ -1096,14 +1094,13 @@ function renderMonth() {
       onclick: () => { state.board = person.id || person.email; renderMonth(); },
     }), person.color);
     add(tab, 
-      el('span', { class: 'dot' + (person.joined ? '' : ' dot--ring'), 'aria-hidden': 'true' }),
       el('span', { text: person.name }),
     );
     return tab;
   }));
 
   mount($('#plates'), state.people.map(person => monthPlate(person, y, m)));
-  mount($('#indexList'), kindLegend(), monthIndex(y, m));
+  mount($('#indexList'), monthIndex(y, m), kindLegend());
   requestAnimationFrame(moveRailInk);
 }
 
@@ -1124,7 +1121,6 @@ function monthPlate(person, y, m) {
   const plate = paint(el('div', { class: 'panel plate' + (key === state.board ? ' is-on' : ''), data: { board: key } }), person.color);
 
   add(plate, el('div', { class: 'plate__hd' },
-    el('span', { class: 'dot' + (person.joined ? '' : ' dot--ring'), 'aria-hidden': 'true' }),
     el('h3', { class: 'plate__n', text: person.name }),
     isMe ? el('span', { class: 'you', text: 'You' }) : null,
   ));
@@ -1240,36 +1236,59 @@ function calendar(person, y, m, set, today, isMe) {
   return grid;
 }
 
-/** Everyone else's month as a barcode, so nobody is hidden behind a tap. */
+/**
+ * Everyone's month, one row each, with the days lined up in columns — so the
+ * 9th is the 9th all the way down and a month can be stacked against the rest
+ * at a glance. You are in it too, and so is whoever's board is open: leaving
+ * them out is what used to send people tapping an empty board just to see
+ * the whole family at once. A row opens that person's board.
+ */
 function monthIndex(y, m) {
-  const others = state.people.filter(p => (p.id || p.email) !== state.board);
-  if (!others.length) return null;
+  if (!state.people.length) return null;
 
   const total = daysInMonth(y, m);
-  const nodes = [el('span', { class: 'cap index__cap', text: `The rest of the family · ${MONTHS[m]}` })];
+  const today = todayISO();
+  const days = Array.from({ length: total }, (_, i) => `${y}-${pad(m + 1)}-${pad(i + 1)}`);
 
-  for (const person of others) {
+  // Every column is one day wide; the grids below share this so they align.
+  const grid = (cls, kids) => el('span', { class: cls, style: { '--days': String(total) } }, kids);
+
+  const header = el('div', { class: 'irow irow--hd', 'aria-hidden': 'true' },
+    el('span'),
+    grid('mini mini--hd', days.map((_, i) => {
+      const d = i + 1;
+      return el('span', { text: d === 1 || d % 5 === 0 ? String(d) : '' });
+    })),
+    el('span', { class: 'irow__h', text: 'Days' }),
+  );
+
+  const rows = state.people.map(person => {
+    const key = person.id || person.email;
     const set = person.joined ? daysOf(person.id) : new Set();
-    const ticks = [];
-    for (let d = 1; d <= total; d++) {
-      const iso = `${y}-${pad(m + 1)}-${pad(d)}`;
-      ticks.push(el('i', { class: set.has(iso) ? ['on', kindClass(person.id, iso)].filter(Boolean).join(' ') : '' }));
-    }
+    const ticks = days.map(iso => el('i', {
+      class: [
+        set.has(iso) ? `on ${kindClass(person.id, iso)}` : '',
+        iso > today ? 'fut' : '',
+        iso === today ? 'now' : '',
+      ].filter(Boolean).join(' ') || null,
+    }));
     const count = person.joined ? countMonth(set, y, m) : null;
-    const row = paint(el('button', {
-      class: 'irow', type: 'button',
+    const shown = key === state.board;
+    const row = el('button', {
+      class: 'irow' + (shown ? ' is-sel' : ''), type: 'button',
+      'aria-current': shown ? 'true' : null,
       'aria-label': `Show ${person.name}'s board. ${count === null ? 'Not signed in yet' : `${count} days in ${MONTHS[m]}`}`,
-      onclick: () => { state.board = person.id || person.email; renderMonth(); document.getElementById('plates').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); },
-    }), person.color);
-    add(row, 
+      onclick: () => { state.board = key; renderMonth(); document.getElementById('plates').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); },
+    });
+    add(row,
       el('span', { class: 'irow__n', text: person.name }),
-      el('span', { class: 'mini', 'aria-hidden': 'true' }, ticks),
-      el('span', { class: 'irow__c' }, el('span', { text: count === null ? '—' : String(count) }), el('span', { text: 'days' })),
-      icon('right'),
+      grid('mini', ticks),
+      el('span', { class: 'irow__c', text: count === null ? '—' : String(count) }),
     );
-    nodes.push(row);
-  }
-  return nodes;
+    return row;
+  });
+
+  return [el('span', { class: 'cap index__cap', text: `Everyone · ${MONTHS[m]}` }), header, rows];
 }
 
 /* --------------------------------- weight -------------------------------- */
@@ -1333,7 +1352,6 @@ function renderWeight() {
       const d30 = theirSummary.deltas.find(x => x.key === 'd30');
       const row = paint(el('div', { class: 'wfrow' }), person.color);
       add(row, 
-        el('span', { class: 'dot', 'aria-hidden': 'true' }),
         el('span', { class: 'wfrow__n', text: person.name }),
         el('span', { class: 'wfrow__d', text: d30?.grams != null ? `${displayDelta(d30.grams, unit)} in ${d30.spanDays} days` : 'No 30-day comparison' }),
         el('span', { class: 'wfrow__v' },
@@ -1647,7 +1665,7 @@ function openDayEditor(iso) {
     const kind = { Cardio: 'cardio', Resistance: 'resistance' }[group.name];
     return el('div', { class: 'fgroup' },
       el('span', { class: 'cap' },
-        byWorkout() && kind ? el('i', { class: `kdot k-${kind}`, 'aria-hidden': 'true' }) : null,
+        kind ? el('i', { class: `kdot k-${kind}`, 'aria-hidden': 'true' }) : null,
         el('span', { text: group.name })),
       el('div', { class: 'taggrid' }, buttons),
     );
@@ -1827,25 +1845,11 @@ function openSettings() {
     add(targetRow, button);
   }
 
-  let colorByWorkout = me.color_by_workout === true;
-  const schemeButtons = [[false, 'By person'], [true, 'By workout']].map(([value, label]) => el('button', {
-    class: 'tagb', type: 'button', text: label,
-    'aria-pressed': value === colorByWorkout ? 'true' : 'false',
-    onclick: () => {
-      colorByWorkout = value;
-      schemeButtons.forEach((b, i) => b.setAttribute('aria-pressed', (i === 1) === value ? 'true' : 'false'));
-    },
-  }));
-
   const body = el('div', {},
     el('div', { class: 'fgroup' }, el('span', { class: 'cap', text: 'Display name' }), nameField),
     el('div', { class: 'fgroup' },
       el('span', { class: 'cap', text: 'Days a week I am aiming for' }), targetRow,
       el('p', { class: 'hint hint--left', text: 'Everyone sets their own. Yours is what the week strip and the seal measure you against.' })),
-    el('div', { class: 'fgroup' },
-      el('span', { class: 'cap', text: 'Colour the calendars' }),
-      el('div', { class: 'taggrid' }, schemeButtons),
-      el('p', { class: 'hint hint--left', text: 'By workout: cardio orange, resistance blue, a day of both split corner to corner, anything else grey. It only changes what you see — everyone else keeps their own colours.' })),
     el('div', { class: 'fgroup' },
       el('span', { class: 'cap', text: 'This device' }),
       el('div', { class: 'wfoot wfoot--plain' },
@@ -1873,7 +1877,6 @@ function openSettings() {
         const updated = await db.saveProfile(me.id, {
           display_name: nameField.value.trim().slice(0, 40) || me.email.split('@')[0],
           weekly_target: target,
-          color_by_workout: colorByWorkout,
         });
         state.me = updated;
         await reloadPeople();

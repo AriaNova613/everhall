@@ -24,7 +24,7 @@
    changes; tools/deploy.mjs refuses to publish if you forgot.
    =========================================================================== */
 
-const VERSION = '2026-10-13a';
+const VERSION = '2026-10-13b';
 const CACHE = `carr-athletics-${VERSION}`;
 
 /* The shell. Paths are relative so the worker keeps working if the app is ever

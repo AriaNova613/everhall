@@ -340,8 +340,6 @@ svg{display:block}
 .roster{padding:var(--s2) var(--s5) var(--s3)}
 .rrow{display:flex;align-items:center;gap:var(--s3);min-height:52px;border-top:1px solid var(--line)}
 .rrow:first-child{border-top:0}
-.dot{width:9px;height:9px;border-radius:var(--rf);flex:none;background:var(--c)}
-.dot--ring{background:none;box-shadow:inset 0 0 0 1.5px var(--text-3)}
 .rrow__n{font-size:14.5px;font-weight:600;flex:none}
 .rrow__s{margin-left:auto;display:flex;align-items:center;gap:8px;min-width:0}
 .rrow__s span{font-size:13px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -393,7 +391,7 @@ svg{display:block}
   width:9px;height:1px;background:var(--line-3);
 }
 .wrail{position:relative;height:4px;margin-top:9px;background:var(--well);border-radius:2px;border:1px solid var(--line)}
-.wrail__f{position:absolute;left:0;top:0;bottom:0;background:var(--c);border-radius:2px}
+.wrail__f{position:absolute;left:0;top:0;bottom:0;background:var(--text-2);border-radius:2px}
 .wrail__t{position:absolute;top:-4px;bottom:-4px;width:1px;background:var(--text-2)}
 .wrail__t::after{
   content:"";position:absolute;top:-4px;left:-3px;width:7px;height:4px;background:var(--text-2);
@@ -427,8 +425,6 @@ svg{display:block}
   scroll-snap-align:start;transition:color var(--t-fast) var(--e-out);
 }
 .tab[aria-selected="true"]{color:var(--text-1)}
-.tab .dot{width:7px;height:7px;opacity:.55;transition:opacity var(--t-fast) var(--e-out)}
-.tab[aria-selected="true"] .dot{opacity:1}
 .rail__ink{
   position:absolute;left:0;bottom:-1px;height:2px;width:0;background:var(--accent);
   transition:transform 220ms var(--e-out),width 220ms var(--e-out);
@@ -473,9 +469,9 @@ svg{display:block}
 .cell.is-on{background:var(--c);border-color:transparent;color:var(--on-c)}
 .cell.is-on .cell__n{position:absolute;top:3px;left:5px;font-size:9.5px;font-weight:700;color:rgba(11,10,9,.62)}
 .cell__ck{width:50%;height:50%;stroke-width:3;color:var(--on-c)}
-/* Colouring by workout. Setting --c on the cell itself overrides the person
-   colour it would otherwise inherit from its plate, so every rule that draws
-   with --c follows along without being repeated here. */
+/* Colouring by workout. Setting --c on the day itself overrides the person
+   colour it would otherwise inherit from its row or plate, so every rule that
+   draws with --c follows along without being repeated here. */
 .is-on.k-cardio,.on.k-cardio{--c:var(--k-cardio)}
 .is-on.k-resistance,.on.k-resistance{--c:var(--k-resistance)}
 .is-on.k-other,.on.k-other{--c:var(--k-other)}
@@ -494,18 +490,32 @@ svg{display:block}
 /* --- the index: everyone else's month, permanently on screen ------------ */
 .index{margin-top:var(--s4)}
 .index__cap{display:block;margin-bottom:var(--s2)}
+/* One row per person, every day its own column. The columns are fractions of
+   the same width in every row and in the header, so a day lines up all the way
+   down — the point of the thing. No chevron and no "days" on each row: the
+   width goes to the days instead, which is what makes them big enough to read
+   on a phone. */
 .irow{
-  display:flex;align-items:center;gap:var(--s3);width:100%;
-  min-height:52px;padding:0 var(--s1);border-top:1px solid var(--line);text-align:left;
+  display:grid;grid-template-columns:52px minmax(0,1fr) 30px;align-items:center;gap:var(--s3);
+  width:100%;min-height:48px;padding:0 var(--s1);border-top:1px solid var(--line);text-align:left;
   transition:background var(--t-fast) var(--e-out);
 }
 .irow:hover{background:var(--panel)}
-.irow__n{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-2);width:58px;flex:none}
-.mini{display:flex;gap:1px;flex:1;min-width:0;align-items:center;height:16px}
-.mini i{display:block;width:3px;height:11px;border-radius:.5px;background:var(--line-2);flex:none}
-.mini i.on{height:15px;background:var(--c)}
+.irow.is-sel{background:var(--panel)}
+.irow.is-sel .irow__n{color:var(--text-1)}
+.irow--hd{min-height:0;padding-bottom:4px;border-top:0}
+.irow--hd:hover{background:none}
+.irow__n{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.irow__h{font-size:9.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-2);text-align:right}
+.mini{display:grid;grid-template-columns:repeat(var(--days,31),minmax(0,1fr));gap:2px;align-items:center;height:22px}
+.mini i{display:block;height:12px;border-radius:1px;background:var(--line-2)}
+.mini i.on{height:22px;background:var(--c)}
+.mini i.fut{opacity:.35}
+.mini i.now{box-shadow:0 0 0 1px var(--accent-dim)}
 .mini i.on.k-both{background:linear-gradient(180deg,var(--k-cardio) 50%,var(--k-resistance) 50%)}
-
+.mini--hd{height:auto}
+.mini--hd span{font-size:9.5px;font-weight:600;color:var(--text-3);text-align:center;white-space:nowrap;overflow:visible;font-variant-numeric:tabular-nums}
+.irow__c{font-family:var(--display);font-weight:800;font-size:18px;font-variant-numeric:tabular-nums;color:var(--text-1);text-align:right}
 .klegend{
   display:flex;flex-wrap:wrap;gap:6px 14px;margin:var(--s4) 0 var(--s2);
   font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-2);
@@ -517,9 +527,6 @@ svg{display:block}
 .kdot.k-resistance{background:var(--k-resistance)}
 .kdot.k-other{background:var(--k-other)}
 .kdot.k-both{background:linear-gradient(135deg,var(--k-cardio) 50%,var(--k-resistance) 50%)}
-.irow__c{font-family:var(--display);font-weight:800;font-size:20px;font-variant-numeric:tabular-nums;color:var(--text-1);flex:none}
-.irow__c span{font-family:var(--ui);font-size:10.5px;font-weight:600;letter-spacing:.12em;color:var(--text-2);margin-left:4px;text-transform:uppercase}
-.irow>svg{width:13px;height:13px;color:var(--text-2);flex:none}
 
 /* ==========================================================================
    5. WEIGHT
@@ -862,8 +869,9 @@ body[data-sheet] #alertRoot{top:calc(var(--s4) + 64px + env(safe-area-inset-top)
   .sec--weight {grid-column:1;grid-row:4}
   .sec--install{grid-column:1;grid-row:5}
   .sec--month  {grid-column:2;grid-row:1/span 5}
-  /* Nothing is behind a tap on a wide screen: every board is on the page. */
-  .rail,.index{display:none}
+  /* Nothing is behind a tap on a wide screen: every board is on the page,
+     and the side-by-side month stays too, because it is the comparison. */
+  .rail{display:none}
   .plates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s4)}
   .plate{display:block}
   .plate.is-on{animation:none}
