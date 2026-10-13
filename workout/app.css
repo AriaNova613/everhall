@@ -511,7 +511,6 @@ svg{display:block}
 .mini i{display:block;height:12px;border-radius:1px;background:var(--line-2)}
 .mini i.on{height:22px;background:var(--c)}
 .mini i.fut{opacity:.35}
-.mini i.now{box-shadow:0 0 0 1px var(--accent-dim)}
 .mini i.on.k-both{background:linear-gradient(180deg,var(--k-cardio) 50%,var(--k-resistance) 50%)}
 .mini--hd{height:auto}
 .mini--hd span{font-size:9.5px;font-weight:600;color:var(--text-3);text-align:center;white-space:nowrap;overflow:visible;font-variant-numeric:tabular-nums}

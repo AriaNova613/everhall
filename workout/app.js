@@ -1269,7 +1269,6 @@ function monthIndex(y, m) {
       class: [
         set.has(iso) ? `on ${kindClass(person.id, iso)}` : '',
         iso > today ? 'fut' : '',
-        iso === today ? 'now' : '',
       ].filter(Boolean).join(' ') || null,
     }));
     const count = person.joined ? countMonth(set, y, m) : null;
